@@ -1,0 +1,26 @@
+# Core Data
+numpy
+pandas
+scipy
+
+# Visualization
+matplotlib
+seaborn
+
+# Machine Learning
+scikit-learn
+xgboost
+lightgbm
+
+# Time Series Forecasting
+prophet
+
+# Utilities
+joblib
+tqdm
+python-dotenv
+
+# LLM / Agent
+langchain
+openai
+tiktoken
