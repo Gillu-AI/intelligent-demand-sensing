@@ -1,0 +1,279 @@
+Detailed Explanation of Every Folder & File (Senior-level, Fresher-friendly)
+
+I’ll explain this exactly in the style you asked, similar to your examples.
+
+📁 config/
+
+Purpose: Central brain of the project
+
+config.yaml
+
+Used to store all configurable values such as:
+
+Data paths
+
+Model parameters
+
+Feature flags
+
+Forecast horizon
+
+Inventory CSL
+
+LLM settings
+
+Why it exists:
+
+Avoids hardcoding
+
+Easy experimentation
+
+Business + ML separation
+
+This file controls WHAT the system does, not HOW.
+
+📁 data/
+
+Purpose: Stores all data given by or generated for the project
+
+This folder represents customer and system data, not code.
+
+📁 data/raw/
+
+Stores original input data from business/customer
+
+Examples:
+
+CSV
+
+Excel
+
+❗ This data is never modified directly
+
+Acts as a legal & audit reference
+
+Example: Sales data from 2022–2024
+
+📁 data/calendar/
+
+Stores holiday, festival, and event data
+
+Used to capture seasonality effects
+
+Joined during feature engineering
+
+📁 data/processed/
+
+Stores cleaned and transformed datasets
+
+Output of preprocessing & feature engineering
+
+Used as input for modeling
+
+Think of this as the “ready-for-ML” data layer
+
+📁 outputs/
+
+Purpose: Final deliverables for business & stakeholders
+
+📁 outputs/forecasts/
+
+Stores forecasted demand values (CSV)
+
+Example: 2025 daily demand forecast
+
+📁 outputs/plots/
+
+Stores graphs and visualizations
+
+Used in presentations and reports
+
+📁 outputs/reports/
+
+Stores evaluation summaries
+
+Business insights
+
+Observations & recommendations
+
+📁 logs/
+
+Purpose: Debugging, monitoring, audit
+
+Contains execution logs
+
+Critical for:
+
+Production readiness
+
+Pharma/enterprise compliance
+
+Debugging failures
+
+📁 src/
+
+Purpose: All application logic (NO data here)
+
+This is the heart of the system.
+
+📁 src/ingestion01/
+
+Purpose: Step 1 – Data ingestion & preprocessing
+
+preprocessing.py
+
+Reads raw data from data/raw/
+
+Performs:
+
+Null handling
+
+Date parsing
+
+Type correction
+
+Basic validations
+
+Saves cleaned output to data/processed/
+
+❌ No feature engineering
+
+❌ No modeling logic
+
+📁 src/features02/
+
+Purpose: Step 2 – Feature engineering
+
+feature_engineering.py
+
+Creates:
+
+Lag features
+
+Rolling means
+
+Calendar joins
+
+Demand classification (Low/Medium/High)
+
+Fully driven by config.yaml
+
+Outputs enhanced dataset to data/processed/
+
+📁 src/models03/
+
+Purpose: Step 3 – Model development
+
+model_trainer.py
+
+Contains training logic for:
+
+Linear Regression
+
+Random Forest
+
+XGBoost
+
+LightGBM
+
+Prophet
+
+Ensemble models
+
+Uses parameters from config
+
+❌ No hyperparameter tuning logic here
+
+model_registry.py
+
+Saves trained models
+
+Loads models for inference
+
+Handles versioning
+
+📁 src/inventory04/
+
+Purpose: Step 4 – Inventory decision logic
+
+inventory_planning.py
+
+Converts demand forecasts into:
+
+Safety stock
+
+Reorder point
+
+Uses business rules like CSL
+
+This is business intelligence, not ML
+
+📁 src/llm05/
+
+Purpose: Step 5 – LLM-based intelligence
+
+llm_agent.py
+
+Enables what-if analysis:
+
+“What if demand increases by 20%?”
+
+“What if lead time doubles?”
+
+Uses LLM + regex fallback
+
+Keeps system safe and explainable
+
+📁 src/pipelines/
+
+Purpose: Orchestration layer
+
+run_pipeline.py
+
+Runs end-to-end pipeline
+
+Controls execution order
+
+Used for automation and scheduling
+
+📁 src/utils/
+
+Purpose: Shared infrastructure code
+
+config_loader.py
+
+Loads and validates config.yaml
+
+Fail-fast safety
+
+logger.py
+
+Centralized logging setup
+
+Used by all modules
+
+📁 tests/
+
+Purpose: Quality assurance
+
+Unit tests
+
+Prevents regression
+
+Professional standard
+
+📄 main.py
+
+Single entry point
+
+Calls pipeline logic
+
+Used for execution
+
+📄 README.md
+
+Complete project documentation
+
+Explains architecture, flow, and usage
+
+Mandatory for professional repos

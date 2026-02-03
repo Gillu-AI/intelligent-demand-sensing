@@ -1,0 +1,57 @@
+# =========================
+# IDS Project Configuration
+# =========================
+
+# DATA PATHS
+data:
+  raw_data_path: "data/raw/sales_data.csv"    # Original sales data (2022-2024)
+  processed_data_path: "data/processed/processed_sales.csv"  # After preprocessing & feature engineering
+  calendar_data_path: "data/calendar/holidays.csv"  # Holiday/festival info for feature engineering
+  output_path: "outputs/"  # Where forecasts, plots, and model outputs will be saved
+
+# MODEL PARAMETERS
+model:
+  random_forest:
+    n_estimators: 200
+    max_depth: 10
+    random_state: 42
+  xgboost:
+    learning_rate: 0.1
+    n_estimators: 150
+    max_depth: 8
+    random_state: 42
+  lgbm:
+    learning_rate: 0.05
+    n_estimators: 200
+    max_depth: -1  # -1 means no limit
+    random_state: 42
+
+# FORECASTING SETTINGS
+forecasting:
+  forecast_horizon: 365  # Days to forecast (2025)
+  rolling_window: 30     # Days used for rolling features
+  safety_stock_csl: 0.95 # 95% Customer Service Level
+
+# FEATURE ENGINEERING
+features:
+  use_lag_features: true
+  lag_days: [1, 7, 14, 30]   # Lag features for demand patterns
+  use_rolling_mean: true
+  rolling_windows: [7, 14, 30] # Rolling mean windows
+  include_calendar_features: true
+  include_promotions: true  # If we have promotion info
+
+# LLM AGENT SETTINGS
+llm_agent:
+  model_name: "gpt-4"   # Which LLM to use for what-if agent
+  max_tokens: 500
+  temperature: 0.2       # Low temperature for consistent predictions
+  fallback_regex: true   # If LLM fails, fallback to regex-based logic
+
+# LOGGING & RANDOM SEEDS
+logging:
+  log_level: "INFO"
+  log_file: "logs/ids_project.log"
+
+seeds:
+  global_seed: 42  # For reproducibility
