@@ -277,3 +277,213 @@ Complete project documentation
 Explains architecture, flow, and usage
 
 Mandatory for professional repos
+
+(ids_env) PS C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing> tree /f         
+Folder PATH listing for volume Windows
+Volume serial number is 962D-2395
+C:.
+│   .gitignore
+│   main.py
+│   README.md
+│   reference.txt
+│   requirements.txt
+│   version_check.py
+│   
+├───config
+│       config.yaml
+│       __init__.py
+│
+├───data
+│   ├───external
+│   │       assumptions.md
+│   │
+│   ├───processed
+│   │       cleaned_sales.parquet
+│   │       features_sales.parquet
+│   │       model_ready.parquet
+│   │
+│   └───raw
+├───logs
+│       ids_project.log
+│
+├───notebooks
+│       exploration.ipynb
+│
+├───output
+│   ├───forecasts
+│   ├───inventory
+│   ├───metrics
+│   ├───model
+│   ├───plots
+│   ├───reports
+│   │       business_insights.md
+│   │
+│   └───visuals
+├───src
+│   │   __init__.py
+│   │   
+│   ├───features_02
+│   │       calendar_features.py
+│   │       feature_engineering.py
+│   │       preprocess.py
+│   │       __init__.py
+│   │
+│   ├───ingestion_01
+│   │       load_data.py
+│   │       validate_schema.py
+│   │       __init__.py
+│   │
+│   ├───inventory04
+│   │       inventory_planning.py
+│   │       safety_stock.py
+│   │       __init__.py
+│   │
+│   ├───llm05
+│   │       prompt_templates.py
+│   │       what_if_agent.py
+│   │       __init__.py
+│   │
+│   ├───modeling_03
+│   │       base_models.py
+│   │       demand_classifier.py
+│   │       evaluate.py
+│   │       hyperparameter_tuning.py
+│   │       stacking_ensemble.py
+│   │       __init__.py
+│   │
+│   ├───pipelines
+│   │       run_features.py
+│   │       run_fullpipeline.py
+│   │       run_ingestion.py
+│   │       run_inventory.py
+│   │       run_training.py
+│   │
+│   ├───utils
+│   │       config_loader.py
+│   │       helpers.py
+│   │       logger.py
+│   │       __init__.py
+│   │
+│   └───visualization06
+│           forecast_plots.py
+│           inventory_plots.py
+│           performance_plots.py
+│           __init__.py
+│
+└───tests
+
+Coding Philosophy (NEW & IMPORTANT)
+
+From now on, all code we write must be:
+
+General – reusable across projects
+
+Config-driven – no hardcoding
+
+Defensive – validates inputs and fails clearly
+
+Explainable – readable by humans and AI copilots
+
+Portable – minimal assumptions about data schema
+
+I’ve saved this as a permanent rule for the IDS project.
+
+Design & implement the FIRST reusable function:
+Read raw sales data
+
+Normalize column names
+
+Apply rename map
+
+Validate schema
+
+Log clearly
+
+Fail gracefully
+
+This will become a template you can reuse in any future project.
+
+
+This conversation is a continuation of my long-running project:
+
+Project Name:
+Intelligent Demand Sensing & Autonomous Inventory Planning (IDS)
+
+Instruction (Important):
+You must fully recall and strictly follow ALL prior discussions, decisions, and rules related to this project.
+Do NOT treat this as a new project or a fresh start.
+
+Continuity Rules:
+1. Architecture is FINAL and FROZEN.
+   - Repo structure with numbered modules (ingestion_01, features_02, modeling_03, inventory04, llm05, visualization06, pipelines, utils).
+   - Config-driven design using config/config.yaml.
+   - Centralized config_loader.py.
+   - Strict separation of src/, data/raw, data/processed, output/.
+   - No architectural changes unless I explicitly ask and approve them.
+
+2. Coding Standards are FINAL and MUST be enforced:
+   - All code must be general, reusable, and portable to other projects wherever possible.
+   - Functions must be config-driven, not hardcoded.
+   - Column names must be normalized to snake_case (auto convert, replace spaces, '/', special chars).
+   - Use flexible rename maps to handle multiple real-world column variants.
+   - Defensive programming: validate inputs, schemas, and configs early.
+   - Clear, actionable error messages that explain:
+        • what is missing
+        • what was found
+        • how the user can fix it (e.g., extend rename_map)
+   - Separate I/O from business logic.
+   - Use type hints, docstrings, logging (not print), and meaningful function names.
+
+3. Teaching Style (Mandatory):
+   - Treat me as a fresher-to-intermediate engineer being trained in INDUSTRIAL practices.
+   - Before coding:
+        • Explain WHY we are doing something
+        • Explain WHAT problem it solves
+        • Explain WHEN it can be reused in other projects
+   - Clearly define every function:
+        • Purpose
+        • Parameters
+        • Expected inputs/outputs
+        • Reusability notes
+   - If something cannot be made generic, explain WHY and keep it project-specific.
+
+4. Workflow Discipline:
+   - Do NOT repeat already completed steps.
+   - Do NOT jump ahead.
+   - Confirm the current phase before proceeding.
+   - Always align with the existing repo state and last agreed checkpoint.
+
+5. Scope Reminder:
+   - This project includes:
+        • Data ingestion & validation
+        • Feature engineering with calendar/festival joins
+        • Demand classification (Low/Medium/High)
+        • Multiple forecasting models + stacking ensemble
+        • Inventory planning & safety stock (95% CSL)
+        • LLM-based what-if agent (with regex fallback)
+        • Production-style pipelines & logging
+
+6. Strictness Clause:
+   - Be strict.
+   - Challenge bad practices.
+   - Prefer long-term maintainability over shortcuts.
+   - Think like a Solution Architect / Tech Lead guiding a production system.
+
+Start by:
+- Briefly summarizing where we left off
+- Stating the NEXT logical step
+- Explaining the industrial reasoning before writing any code
+
+
+
+
+QUICK “LITE” PROMPT
+Continue my ongoing AI project from the last checkpoint.
+
+Rules:
+- Recall all prior architecture, decisions, and completed steps.
+- Architecture and coding standards are frozen unless I approve changes.
+- Code must be reusable, config-driven, defensive, and industry-grade.
+- Do not repeat or restart completed work.
+
+Start by summarizing where we left off and propose the next step.

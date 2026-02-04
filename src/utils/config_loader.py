@@ -1,46 +1,107 @@
-import yaml
+"""
+Centralized configuration loader for the IDS project.
+
+Responsibilities:
+- Load YAML configuration
+- Validate mandatory sections
+- Enforce defensive checks
+- Provide a single, safe config object
+
+This module is intentionally generic and reusable across projects.
+"""
+
 from pathlib import Path
+from typing import Dict, Any
+import yaml
+import logging
 
 
-def load_config(config_path: str) -> dict:
+logger = logging.getLogger(__name__)
+
+
+class ConfigError(Exception):
+    """Raised when configuration validation fails."""
+    pass
+
+
+def load_config(config_path: str) -> Dict[str, Any]:
     """
-    Loads and validates the YAML configuration file.
+    Load and validate the IDS configuration file.
 
-    Args:
-        config_path (str): Path to config.yaml
+    Parameters
+    ----------
+    config_path : str
+        Path to the config.yaml file
 
-    Returns:
-        dict: Parsed configuration dictionary
+    Returns
+    -------
+    Dict[str, Any]
+        Validated configuration dictionary
+
+    Raises
+    ------
+    ConfigError
+        If the configuration file is missing, malformed,
+        or fails validation checks
     """
 
-    config_file = Path(config_path)
+    path = Path(config_path)
 
-    # Check if config file exists
-    if not config_file.exists():
-        raise FileNotFoundError(
-            f"Config file not found at path: {config_file}"
+    if not path.exists():
+        raise ConfigError(
+            f"Configuration file not found at path: {path.resolve()}"
         )
 
-    # Load YAML safely
+    if path.suffix not in {".yaml", ".yml"}:
+        raise ConfigError(
+            f"Invalid config file format: {path.name}. Expected a YAML file."
+        )
+
     try:
-        with open(config_file, "r") as file:
-            config = yaml.safe_load(file)
+        with path.open("r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
     except yaml.YAMLError as exc:
-        raise ValueError("Error parsing YAML file") from exc
+        raise ConfigError(
+            f"Failed to parse YAML configuration: {exc}"
+        ) from exc
 
-    # Basic validation (fail fast)
-    required_sections = [
-        "data",
-        "model",
-        "forecasting",
-        "features",
-        "llm_agent"
-    ]
+    if not isinstance(config, dict):
+        raise ConfigError(
+            "Top-level configuration must be a dictionary."
+        )
 
-    for section in required_sections:
-        if section not in config:
-            raise KeyError(
-                f"Missing required section '{section}' in config.yaml"
-            )
+    _validate_required_sections(config)
+
+    logger.info("Configuration loaded and validated successfully.")
 
     return config
+
+
+def _validate_required_sections(config: Dict[str, Any]) -> None:
+    """
+    Validate presence of mandatory top-level sections.
+
+    This enforces architectural contracts and prevents
+    silent misconfiguration.
+    """
+
+    required_sections = {
+        "project",
+        "paths",
+        "logging",
+        "seeds",
+        "data_schema",
+        "features",
+        "models",
+        "ensemble",
+        "inventory",
+        "llm",
+        "execution"
+    }
+
+    missing = required_sections - config.keys()
+
+    if missing:
+        raise ConfigError(
+            f"Missing required config sections: {sorted(missing)}"
+        )
