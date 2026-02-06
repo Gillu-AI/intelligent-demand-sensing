@@ -52,13 +52,14 @@ data_schema:
   required_columns:
     - date
     - total_sales
-
-  optional_columns:
     - sales_open
     - sales_closed
     - is_festival
-    - festival_name
     - is_holiday
+
+  optional_columns:
+    
+    - festival_name
     - is_promo
     - weekday_weekend
     - day

@@ -487,3 +487,19 @@ Rules:
 - Do not repeat or restart completed work.
 
 Start by summarizing where we left off and propose the next step.
+
+
+
+The Job of config_loader.py (One Sentence)
+
+config_loader.py is responsible for loading the project configuration into memory in a safe, 
+validated, and consistent way so that the rest of the system can rely on it without defensive 
+checks.
+
+
+schema utility
+Responsibility of This File (Very Important)
+
+Convert raw input data into a canonical, validated schema that the rest of the system 
+can safely use. Convert unpredictable raw tabular data into a canonical, validated schema 
+that the rest of the system can blindly trust.
