@@ -503,3 +503,62 @@ Responsibility of This File (Very Important)
 Convert raw input data into a canonical, validated schema that the rest of the system 
 can safely use. Convert unpredictable raw tabular data into a canonical, validated schema 
 that the rest of the system can blindly trust.
+
+WHAT Data Ingestion Utilities module is responsible for (very strict)
+
+This module will do ONLY:
+
+✅ Read raw data from disk
+✅ Apply schema processing using schema_utils
+✅ Return a clean, validated DataFrame
+
+It will NOT:
+
+Do feature engineering
+Do modeling
+Do business logic
+Hardcode column names
+Decide execution order beyond ingestion
+
+
+CHECKPOINT to see src file (DO NOT SKIP)
+
+Before running, answer this one thing:
+
+👉 In VS Code terminal, does this command succeed?
+
+python -c "from utils.config_loader import load_config"
+
+If YES
+
+src is already on PYTHONPATH
+
+You can run normally
+
+If NO
+
+You must use the $env:PYTHONPATH="src" command
+Run Python with src added to PYTHONPATH.
+
+On Windows (PowerShell):
+$env:PYTHONPATH="src"
+This tells Python:
+
+“Treat src/ as a top-level import root”
+
+Run it with the relative path (RECOMMENDED)
+
+This is the cleanest and most common approach.
+
+In the same terminal, run:
+
+python tests/test_ingestion.py
+
+
+Since:
+
+PYTHONPATH=src is already set
+
+Working directory is project root
+
+👉 Imports will resolve correctly.

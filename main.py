@@ -12,7 +12,7 @@
 
 # ---------------------------------------------------------------
  
-from src.ingestion_01.load_data import read_sales, read_calendar, join_sales_calendar
+from src.ingestion01.load_tabular_data import read_sales, read_calendar, join_sales_calendar
  
 def main():
 

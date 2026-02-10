@@ -25,7 +25,7 @@ paths:
     metrics: "output/metrics"
     plots: "output/plots"
     reports: "output/reports"
-    models: "output/model"
+    model: "output/model"
 
   logs: "logs"
 
@@ -40,46 +40,212 @@ logging:
 
 seeds:
   global_seed: 42
+  propagate_to_models: true
 
 
 # ==============================
 # Data Schema & Normalization
 # ==============================
 data_schema:
-  date_column: "date"
-  target_column: "total_sales"
 
-  required_columns:
-    - date
-    - total_sales
-    - sales_open
-    - sales_closed
-    - is_festival
-    - is_holiday
+  # -------------------------
+  # Sales dataset schema
+  # -------------------------
+  sales:
+    date_column: "date"
+    target_column: "total_sales"
 
-  optional_columns:
-    
-    - festival_name
-    - is_promo
-    - weekday_weekend
-    - day
+    required_columns:
+      - date
+      - total_sales
+      - sales_open
+      - sales_closed
 
-  normalize_columns: true
+    optional_columns:
+      - is_festival
+      - is_holiday
+      - is_promo
+      - weekday_weekend
+      - day
 
-  rename_map:
-    date: ["date"]
-    total_sales: ["total_sales", "sales", "total"]
-    sales_open: ["sales_open", "open_sales"]
-    sales_closed: ["sales_closed", "closed_sales"]
+    optional_column_policy:
+      on_missing: "warn"          # warn | ignore | error
 
-    is_festival: ["festival", "festival_flag", "is_festival"]
-    festival_name: ["festival_name", "fest_name"]
+    normalize_columns: true     # Convert to lowercase and strip spaces
 
-    is_holiday: ["holiday", "is_holiday"]
-    is_promo: ["promo", "promotion", "is_promo"]
+    rename_map:                  # Standardize column names across datasets
+      date: ["date"]
+      total_sales: ["total_sales", "sales", "total"]
+      sales_open: ["sales_open", "open_sales"]
+      sales_closed: ["sales_closed", "closed_sales"]
 
-    weekday_weekend: ["weekday_weekend", "week_type"]
-    day: ["day", "weekday", "day_of_week"]
+# -------------------------
+  # Calendar dataset schema
+  # -------------------------
+  calendar:
+    date_column: "date"
+
+    required_columns:
+      - date
+      - is_festival
+      - is_holiday
+
+    optional_columns:
+      - festival_name
+      - day
+      - weekday_weekend
+
+    optional_column_policy:
+      on_missing: "warn"
+
+    normalize_columns: true
+
+    rename_map:
+      date: ["date"]
+      is_festival: ["festival", "festival_flag", "is_festival"]
+      is_holiday: ["holiday", "is_holiday"]
+      festival_name: ["festival_name", "fest_name"]
+      is_promo: ["promo", "promotion", "is_promo"]
+      weekday_weekend: ["weekday_weekend", "week_type"]
+      day: ["day", "weekday", "day_of_week"]
+
+# ==============================
+# Ingestion Configuration
+# ==============================
+ingestion:
+
+  # ------------------------------------------------
+  # Demand anchor dataset (MANDATORY)
+  # ------------------------------------------------
+  # This dataset must:
+  # - Be enabled
+  # - Contain the target_column (e.g., total_sales)
+  # - Act as the primary demand signal for the pipeline
+  demand_source: "sales"
+
+  # ------------------------------------------------
+  # Global ingestion behavior (applies to ALL sources)
+  # ------------------------------------------------
+  header: true
+  skip_rows: 0
+
+  na_values:
+    - ""
+    - "NA"
+    - "N/A"
+    - "null"
+    - "None"
+
+  strict_load: true   # Fail entire pipeline if any dataset fails
+
+
+  # =================================================
+  # INPUT DATASETS (MULTIPLE, AUTOMATIC)
+  # =================================================
+  datasets:
+
+    # ------------------------------------------------
+    # 1. CSV
+    # ------------------------------------------------
+    calendar:
+      enabled: true
+      source_type: csv
+
+      # File is resolved as:
+      # paths.data.raw + file
+      file: "calendar_holidays.csv"
+
+      csv:
+        delimiter: ","
+        encoding: "utf-8"
+
+
+    # ------------------------------------------------
+    # 2. EXCEL (PRIMARY DEMAND SOURCE)
+    # ------------------------------------------------
+    sales:
+      enabled: true
+      source_type: excel
+
+      file: "sales_data.xlsx"
+
+      excel:
+        # OPTION 1: Load a single sheet
+         sheet_name: "22-24"
+
+        # OPTION 2: Load selected multiple sheets (ACTIVE)
+       # sheet_names:
+        #  - "Calendar"
+        #  - "Holidays"
+        #  - "Sales"
+
+        # OPTION 3: Load ALL sheets
+        # load_all_sheets: true
+
+
+    # ------------------------------------------------
+    # 3. PARQUET
+    # ------------------------------------------------
+    demand_history:
+      enabled: false
+      source_type: parquet
+
+      file: "demand_history.parquet"
+
+      parquet:
+        engine: "pyarrow"
+
+
+    # ------------------------------------------------
+    # 4. DATABASE
+    # ------------------------------------------------
+    master_data:
+      enabled: false
+      source_type: database
+
+      database:
+        engine: "postgresql"
+        host: "localhost"
+        port: 5432
+        database: "inventory_db"
+        schema: "public"
+
+        table: "product_master"
+
+        username_env: "DB_USER"
+        password_env: "DB_PASS"
+
+        fetch_size: 50000
+
+
+    # ------------------------------------------------
+    # 5. API
+    # ------------------------------------------------
+    promotions:
+      enabled: false
+      source_type: api
+
+      api:
+        method: "GET"
+        url: "https://api.example.com/promotions"
+
+        headers:
+          Authorization: "Bearer ${API_TOKEN}"
+          Content-Type: "application/json"
+
+        params:
+          region: "IN"
+          active: true
+
+        timeout_seconds: 30
+
+
+        # Pagination (OPTIONAL)
+        # pagination:
+        #   enabled: true
+        #   page_param: "page"
+        #   size_param: "limit"
+        #   page_size: 1000
 
 
 # ==============================
@@ -100,7 +266,7 @@ features:
     is_weekend: true
     month: true
 
-  include_promotions: true
+  include_promotions: false
 
   demand_bucketing:
     method: "quantile"
@@ -126,15 +292,14 @@ modeling:
       params:
         n_estimators: 200
         max_depth: 10
-        random_state: 42
-
+        
     xgboost:
       enabled: true
       params:
         learning_rate: 0.1
         n_estimators: 150
         max_depth: 8
-        random_state: 42
+       
 
     lightgbm:
       enabled: true
@@ -142,8 +307,7 @@ modeling:
         learning_rate: 0.05
         n_estimators: 200
         max_depth: -1
-        random_state: 42
-
+       
     prophet:
       enabled: true
       yearly_seasonality: true
@@ -155,6 +319,7 @@ modeling:
 # ==============================
 hyperparameter_tuning:
   enabled: false
+  only_for_enabled_models: true
 
   random_forest:
     n_estimators: [100, 200, 300]
@@ -171,6 +336,7 @@ hyperparameter_tuning:
 ensemble:
   method: "stacking"
   meta_model: "linear_regression"
+  use_tuned_models: true
 
 
 # ==============================
@@ -178,6 +344,7 @@ ensemble:
 # ==============================
 inventory:
   service_level: 0.95
+  forecast_consumption_window_days: 7
   lead_time_days: 7
   demand_variability_method: "std"
 
@@ -187,6 +354,11 @@ inventory:
 # ==============================
 llm:
   enabled: true
+  runtime_control:                    # Protects: Cost, Compliance, Reliability, Release safety
+    allow_in_production: false
+    allow_in_training: true
+    allow_in_ci: false
+  
   model_name: "gpt-4"
   temperature: 0.2
   max_tokens: 500
@@ -201,5 +373,6 @@ llm:
 # Execution Controls
 # ==============================
 execution:
-  save_intermediate_outputs: true
-  overwrite_existing_outputs: false
+  mode: "train"                      # dev | train | prod | backfill
+  save_intermediate_outputs: true    # true| true| false| true
+  overwrite_existing_outputs: false  # false| false| false| true

@@ -72,6 +72,7 @@ def normalize_column_names(columns: Iterable[str]) -> List[str]:
         col_clean = re.sub(r"[\s\-]+", "_", col_clean)
         col_clean = re.sub(r"[^a-z0-9_]", "", col_clean)
         col_clean = re.sub(r"_+", "_", col_clean)
+        col_clean = col_clean.strip("_")
 
         normalized.append(col_clean)
 
@@ -83,10 +84,7 @@ def normalize_column_names(columns: Iterable[str]) -> List[str]:
 # ---------------------------------------------------------------------
 # Rename Mapping
 # ---------------------------------------------------------------------
-def apply_rename_map(
-    columns: Iterable[str],
-    rename_map: Dict[str, str]
-) -> List[str]:
+def apply_rename_map(columns: Iterable[str], rename_map: Dict[str, List[str]]) -> List[str]:
     """
     Apply flexible rename mapping to column names.
 
@@ -97,7 +95,7 @@ def apply_rename_map(
     ----------
     columns : Iterable[str]
         Normalized column names
-    rename_map : Dict[str, str]
+    rename_map : Dict[str, List[str]]
         Mapping of alternative names to canonical names
 
     Returns
@@ -106,12 +104,20 @@ def apply_rename_map(
         Column names after applying rename rules
     """
 
+    reverse_map = {}
+
+    for canonical, aliases in rename_map.items():
+        if not isinstance(aliases, (list, tuple)):
+            raise SchemaValidationError(
+                f"Rename map for '{canonical}' must be a list of aliases."
+            )
+        for alias in aliases:
+            reverse_map[alias] = canonical
+
     renamed = []
 
     for col in columns:
-        # Safe fallback ensures pipeline does not fail
-        # if a column is not present in rename_map
-        new_col = rename_map.get(col, col)
+        new_col = reverse_map.get(col, col)
         renamed.append(new_col)
 
     logger.debug("Rename mapping applied to columns.")
@@ -155,36 +161,74 @@ def detect_duplicate_columns(columns: Iterable[str]) -> None:
 
 
 # ---------------------------------------------------------------------
-# Required Column Validation
+# Required & Optional Column Validation
 # ---------------------------------------------------------------------
 def validate_required_columns(
-    columns: Iterable[str],
-    required_columns: Iterable[str]
+    columns: Iterable[str], required_columns: Iterable[str],
+    optional_columns: Iterable[str] | None = None,
+    optional_policy: str = "ignore"
 ) -> None:
     """
-    Validate presence of required columns.
+    Validate presence of required and optional columns according
+    to configured schema policy.
+
+    This function enforces:
+    - All required columns must be present (hard failure)
+    - Optional columns are handled based on policy:
+        - "ignore": do nothing
+        - "warn": log a warning
+        - "error": raise an exception
 
     Parameters
     ----------
     columns : Iterable[str]
-        Available column names
+        Available column names after normalization and renaming
     required_columns : Iterable[str]
         Columns that must be present
+    optional_columns : Iterable[str], optional
+        Columns that are optional but semantically meaningful
+    optional_policy : str, default "ignore"
+        Policy for handling missing optional columns:
+        one of {"ignore", "warn", "error"}
 
     Raises
     ------
     SchemaValidationError
-        If any required column is missing
+        If required columns are missing, or optional columns
+        are missing with policy="error"
     """
 
     available = set(columns)
     required = set(required_columns)
 
-    missing = required - available
-
-    if missing:
+    # --- Required column enforcement ---
+    missing_required = required - available
+    if missing_required:
         raise SchemaValidationError(
-            f"Missing required columns: {sorted(missing)}"
+            f"Missing required columns: {sorted(missing_required)}"
         )
 
     logger.debug("All required columns are present.")
+
+    # --- Optional column policy enforcement ---
+    allowed_policies = {"ignore", "warn", "error"}
+
+    if optional_policy not in allowed_policies:
+        raise SchemaValidationError(
+            f"Invalid optional_policy '{optional_policy}'. "
+            f"Allowed values are: {sorted(allowed_policies)}"
+        )
+    if optional_columns:
+        optional = set(optional_columns)
+        missing_optional = optional - available
+
+        if missing_optional:
+            if optional_policy == "error":
+                raise SchemaValidationError(
+                    f"Missing optional columns (policy=error): {sorted(missing_optional)}"
+                )
+            elif optional_policy == "warn":
+                logger.warning(
+                    "Missing optional columns (policy=warn): %s",
+                    sorted(missing_optional)
+                )

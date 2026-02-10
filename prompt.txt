@@ -248,3 +248,136 @@ Prompt Name                    | Purpose                 | When to Use
 Master Industrial Mentor Prompt| Controls HOW I teach    | Start of any serious project
 IDS Continuation Prompt        | Recalls IDS context     | Start of any IDS chat
 Memory Commit Prompt           | Saves final decisions   | END of a chat
+
+
+END OF CONVERSATION — CODE VALIDATION & AUDIT PROMPT
+====================================================
+
+PURPOSE
+-------
+Perform a **final, production-grade code audit and validation** for this project.
+The goal is to ensure the codebase is:
+
+• Reusable across future projects  
+• Fully config-driven  
+• Architecturally consistent  
+• Free of logical, typing, and integration errors  
+• Industry-ready (ML / data platform standards)
+
+This is a **STRICT validation**, not a refactor unless approved.
+
+
+SCOPE OF VALIDATION
+-------------------
+Validate files **one at a time**
+
+DO NOT jump ahead.
+DO NOT validate multiple files at once.
+
+
+WHAT TO CHECK (MANDATORY)
+-------------------------
+For EACH file, validate ALL of the following:
+
+ARCHITECTURE & DESIGN
+• Matches frozen architecture and contracts
+• Correct separation of concerns
+• No hidden coupling or leakage between layers
+• No architectural drift
+
+REUSABILITY & GENERALIZATION
+• No project-specific hardcoding
+• No embedded paths, credentials, or defaults
+• Fully driven by config where applicable
+• Safe to reuse in a different project by only changing config
+
+CONFIG INTEGRATION
+• Config keys used EXACTLY as defined
+• No mismatched names or assumptions
+• Proper handling of missing / invalid config
+• Defensive validation with clear errors
+
+LOGIC & FLOW
+• Correct execution order
+• No unreachable or redundant code
+• Correct handling of single vs multiple DataFrames
+• Correct strict vs non-strict behavior
+
+TYPING & CONTRACTS
+• Function signatures match frozen contracts
+• Return types are consistent
+• Dict vs DataFrame handling is correct
+• No silent type coercion
+
+ERROR HANDLING
+• Fail fast where required
+• Clear, actionable error messages
+• No swallowed exceptions
+• Strict_load behavior respected
+
+NAMING & CONSISTENCY
+• Uniform parameter names across files
+• Same function names used everywhere
+• No typos (variables, keys, functions)
+• Consistent logging style
+
+INDUSTRY STANDARDS
+• Production-safe patterns
+• Defensive coding
+• Explicit validation
+• No “magic behavior”
+• Clear intent in code
+
+
+HOW TO REPORT ISSUES
+--------------------
+IMPORTANT: Do NOT dump all issues at once.
+
+For EACH file:
+1. Identify the **FIRST issue only**
+2. Explain:
+   • Why it is an error / risk / violation
+   • Which rule or contract it breaks
+   • Its impact (runtime, future reuse, bugs, maintainability)
+3. Propose a **minimal, precise fix**
+4. WAIT for confirmation before moving forward
+
+Only after confirmation:
+→ Move to the NEXT issue in the SAME file  
+Only after the file is fully clean:
+→ Proceed to the NEXT file
+
+
+CHANGE RULES
+------------
+• Do NOT modify architecture
+• Do NOT rename frozen contracts
+• Do NOT add new behavior without approval
+• Suggest changes FIRST, wait for confirmation
+• After approval, provide the corrected code
+• Once finalized, mark the file as FROZEN
+
+
+MEMORY & CONTINUITY RULES
+------------------------
+TREAT STORED MEMORY AS:
+• Final
+• Authoritative
+• Immutable unless explicitly re-approved
+
+NEXT CONVERSATION RULES:
+• Memory is the source of truth
+• Do NOT repeat completed steps
+• Resume exactly from last checkpoint
+• Enforce frozen rules strictly
+
+Do NOT re-explain history unless explicitly asked.
+Confirm internally that memory is respected.
+
+
+STARTING POINT
+--------------
+Begin validation from:
+→ FILE 1: config.yaml
+
+Wait for confirmation after each issue and each file.
