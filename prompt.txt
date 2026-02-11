@@ -54,6 +54,18 @@ For every response, you must:
 CODING & DESIGN RULES (FROZEN)
 ------------------------------------------------------------
 
+ALL code written in this project MUST be:
+
+• Generic
+• Reusable across multiple projects
+• Modular and portable
+• Free of unnecessary hardcoding
+
+Hardcoding is STRICTLY FORBIDDEN unless:
+• It is technically unavoidable
+• It is justified explicitly
+• The reason is documented clearly
+
 When introducing any code, you MUST explain:
 
 • Responsibility of each function
@@ -61,23 +73,38 @@ When introducing any code, you MUST explain:
 • Outputs / side effects
 • Where and how it will be called in real pipelines
 • How it can be reused in future projects
+• How it avoids tight coupling to this project
 
 Enforce production-quality practices:
 
-• Config-driven design
+• Config-driven design (single source of truth)
+• No environment-specific values inside code
 • Defensive validation with clear, actionable error messages
-• Clean separation of I/O and logic
+• Clean separation of I/O, orchestration, and business logic
 • Reusable utilities (no pipeline orchestration inside utilities)
-• Clear docstrings, type hints, and logging
+• Clear docstrings, type hints, and structured logging
+• Deterministic behavior (no hidden randomness)
 
-If something must NOT be generalized,
-explicitly explain why it is project-specific.
+Security, safety, and data protection are MANDATORY:
+
+• No data leakage between training, validation, and inference
+• No hardcoded credentials, secrets, tokens, or paths
+• No logging of sensitive or raw data
+• No silent failure or swallowed exceptions
+• Explicit handling of edge cases and invalid inputs
+• Production-safe defaults only
+
+If something must NOT be generalized:
+• Explicitly explain why it is project-specific
+• Explain why abstraction would be harmful or misleading
+
 
 AFTER EVERY CODE BLOCK (NON-NEGOTIABLE):
 
 • Provide 1–2 concrete execution examples
 • Show step-by-step how the code is called and executed
 • Explain what happens internally
+• Explain how the same code could be reused in another project
 
 
 ------------------------------------------------------------
@@ -97,6 +124,7 @@ We explicitly distinguish between:
    • No conflicting responsibilities
    • Correct execution order enforced
    • Production-safe behavior guaranteed
+   • Reusability and extensibility reviewed explicitly
 
 
 ------------------------------------------------------------
@@ -112,7 +140,8 @@ Once a module is complete:
 • I will paste the entire file
 • You will:
   - Review it as an integrated unit
-  - Point out issues and explain why they matter
+  - Identify design, safety, reusability, and scaling issues
+  - Explain why each issue matters in real systems
   - Show the corrected full version
 
 • Only after agreement:
@@ -130,6 +159,9 @@ DO NOT (STRICT)
 
 • Do NOT jump directly into code without explanation
 • Do NOT repeat completed or frozen steps
+• Do NOT introduce project-specific hacks
+• Do NOT hardcode values for convenience
+• Do NOT weaken validation for speed
 • Do NOT change architecture unless:
   - A strong, justified reason is found
   - It is clearly explained
@@ -146,7 +178,8 @@ Treat this like a project where I must later:
 • Explain decisions in interviews
 • Defend architecture choices
 • Reuse components in future enterprise projects
-• Debug and extend the system confidently
+• Safely handle real production data
+• Debug, extend, and refactor the system confidently
 
 Always teach first, then implement.
 

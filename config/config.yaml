@@ -84,7 +84,11 @@ data_schema:
   # -------------------------
   calendar:
     date_column: "date"
-
+    
+    holiday_column: "is_holiday"
+    festival_column: "is_festival"
+    festival_name_column: "festival_name"
+    
     required_columns:
       - date
       - is_festival
@@ -105,10 +109,10 @@ data_schema:
       is_festival: ["festival", "festival_flag", "is_festival"]
       is_holiday: ["holiday", "is_holiday"]
       festival_name: ["festival_name", "fest_name"]
-      is_promo: ["promo", "promotion", "is_promo"]
+     # is_promo: ["promo", "promotion", "is_promo"]
       weekday_weekend: ["weekday_weekend", "week_type"]
       day: ["day", "weekday", "day_of_week"]
-
+    
 # ==============================
 # Ingestion Configuration
 # ==============================
@@ -247,11 +251,19 @@ ingestion:
         #   size_param: "limit"
         #   page_size: 1000
 
-
 # ==============================
 # Feature Engineering
 # ==============================
 features:
+  time_features:
+    enabled: true
+    day_of_week: true
+    is_weekend: true
+    month: true
+    quarter: true
+    is_month_start: true
+    is_month_end: true
+
   lag_features:
     enabled: true
     lags: [1, 7, 14, 30]
@@ -262,17 +274,16 @@ features:
 
   calendar_features:
     enabled: true
-    day_of_week: true
-    is_weekend: true
-    month: true
+  
+  aggregation_features:
+    enabled: true
+    same_weekday_window: 4
 
   include_promotions: false
 
   demand_bucketing:
     method: "quantile"
     labels: ["Low", "Medium", "High"]
-
-
 # ==============================
 # Modeling (Base Training Params)
 # ==============================
@@ -318,7 +329,7 @@ modeling:
 # Hyperparameter Tuning (Optional)
 # ==============================
 hyperparameter_tuning:
-  enabled: false
+  enabled: true
   only_for_enabled_models: true
 
   random_forest:
@@ -335,7 +346,7 @@ hyperparameter_tuning:
 # ==============================
 ensemble:
   method: "stacking"
-  meta_model: "linear_regression"
+  meta_model: "ridge"
   use_tuned_models: true
 
 
@@ -374,5 +385,5 @@ llm:
 # ==============================
 execution:
   mode: "train"                      # dev | train | prod | backfill
-  save_intermediate_outputs: true    # true| true| false| true
+  save_intermediate_outputs: true    # dev:true | train:true | prod:false | backfill:true
   overwrite_existing_outputs: false  # false| false| false| true
