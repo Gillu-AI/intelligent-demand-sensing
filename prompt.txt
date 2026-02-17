@@ -283,134 +283,308 @@ IDS Continuation Prompt        | Recalls IDS context     | Start of any IDS chat
 Memory Commit Prompt           | Saves final decisions   | END of a chat
 
 
-END OF CONVERSATION — CODE VALIDATION & AUDIT PROMPT
+FINAL PRODUCTION-GRADE CODE AUDIT PROMPT
 ====================================================
 
-PURPOSE
--------
-Perform a **final, production-grade code audit and validation** for this project.
-The goal is to ensure the codebase is:
+# 🔍 FINAL ENTERPRISE-GRADE CODE AUDIT & VALIDATION PROMPT
 
-• Reusable across future projects  
-• Fully config-driven  
-• Architecturally consistent  
-• Free of logical, typing, and integration errors  
-• Industry-ready (ML / data platform standards)
+---
 
-This is a **STRICT validation**, not a refactor unless approved.
+## PURPOSE
 
+Perform a **strict, enterprise-grade, production-level code audit and validation** for this project.
 
-SCOPE OF VALIDATION
--------------------
-Validate files **one at a time**
+The goal is to ensure the system is:
 
-DO NOT jump ahead.
-DO NOT validate multiple files at once.
+- Reusable across future projects  
+- Fully config-driven  
+- Architecturally consistent  
+- Leakage-free (data, temporal, logical)  
+- Secure  
+- Scalable  
+- Industry-ready (ML / Data Platform standards)  
+- Production-safe  
 
+This is a **STRICT validation audit**, not a refactor unless explicitly approved.
 
-WHAT TO CHECK (MANDATORY)
--------------------------
+---
+
+## VALIDATION MODE
+
+- Validate **ONE FILE AT A TIME**
+- Do NOT jump ahead
+- Do NOT validate multiple files at once
+- Do NOT summarize multiple issues together
+- Do NOT assume anything outside frozen architecture
+
+---
+
+# ✅ WHAT TO CHECK (MANDATORY)
+
 For EACH file, validate ALL of the following:
 
-ARCHITECTURE & DESIGN
-• Matches frozen architecture and contracts
-• Correct separation of concerns
-• No hidden coupling or leakage between layers
-• No architectural drift
+---
 
-REUSABILITY & GENERALIZATION
-• No project-specific hardcoding
-• No embedded paths, credentials, or defaults
-• Fully driven by config where applicable
-• Safe to reuse in a different project by only changing config
+## 1️⃣ ARCHITECTURE & DESIGN
 
-CONFIG INTEGRATION
-• Config keys used EXACTLY as defined
-• No mismatched names or assumptions
-• Proper handling of missing / invalid config
-• Defensive validation with clear errors
+- Matches frozen architecture and contracts
+- Correct separation of concerns
+- No hidden coupling between layers
+- No architectural drift
+- No business logic inside orchestration layers
+- No circular dependencies
+- Clear layering:
+  - ingestion01
+  - features02
+  - modeling03
+  - inventory04
+  - pipelines
+  - utils
+- No cross-layer leakage
 
-LOGIC & FLOW
-• Correct execution order
-• No unreachable or redundant code
-• Correct handling of single vs multiple DataFrames
-• Correct strict vs non-strict behavior
+---
 
-TYPING & CONTRACTS
-• Function signatures match frozen contracts
-• Return types are consistent
-• Dict vs DataFrame handling is correct
-• No silent type coercion
+## 2️⃣ REUSABILITY & GENERALIZATION
 
-ERROR HANDLING
-• Fail fast where required
-• Clear, actionable error messages
-• No swallowed exceptions
-• Strict_load behavior respected
+- No project-specific hardcoding
+- No embedded paths
+- No embedded credentials
+- No implicit dataset assumptions
+- Fully driven by config where applicable
+- Safe to reuse in another project by only changing config
+- No “magic constants”
+- No hidden defaults
 
-NAMING & CONSISTENCY
-• Uniform parameter names across files
-• Same function names used everywhere
-• No typos (variables, keys, functions)
-• Consistent logging style
+---
 
-INDUSTRY STANDARDS
-• Production-safe patterns
-• Defensive coding
-• Explicit validation
-• No “magic behavior”
-• Clear intent in code
+## 3️⃣ CONFIG INTEGRATION
 
+- Config keys used EXACTLY as defined
+- No mismatched key names
+- No silent fallback defaults
+- No unused config blocks
+- No orphan config references
+- Defensive validation of required fields
+- Clear errors for missing config
+- Strict config-driven behavior enforced
 
-HOW TO REPORT ISSUES
---------------------
-IMPORTANT: Do NOT dump all issues at once.
+---
+
+## 4️⃣ DATA LEAKAGE AUDIT (CRITICAL)
+
+Check for:
+
+- Time-based leakage
+- Rolling window leakage
+- Lag misalignment
+- Recursive forecasting leakage
+- Train/test contamination
+- Target leakage in feature matrix
+- SHAP leakage
+- Feature engineering leakage
+- Improper temporal splitting
+
+If ANY leakage is detected:
+> STOP immediately and report.
+
+---
+
+## 5️⃣ LOGIC & FLOW VALIDATION
+
+- Correct execution order
+- No redundant operations
+- No unreachable code
+- No duplicated logic
+- Proper strict vs non-strict behavior
+- Correct handling of empty DataFrames
+- Proper Dev vs Prod behavior
+- Proper recursive forecast loop control
+- Correct artifact aliasing logic
+
+---
+
+## 6️⃣ TYPING & CONTRACT VALIDATION
+
+- Function signatures match frozen contracts
+- Return types consistent
+- Dict vs DataFrame handling correct
+- No silent type coercion
+- Explicit conversions where required
+- Proper Pandas usage
+- Proper sklearn compatibility
+
+---
+
+## 7️⃣ ERROR HANDLING
+
+- Fail-fast validation where required
+- Clear, actionable error messages
+- No swallowed exceptions
+- No broad `except` without re-raise
+- Safe file existence checks
+- Proper strict_load enforcement
+- No silent failure patterns
+
+---
+
+## 8️⃣ LOGGER & OUTPUT CONSISTENCY
+
+- No `print()` statements in production pipelines
+- Logger used consistently
+- No mixed logging styles
+- Correct log levels (`info`, `warning`, `error`)
+- No sensitive data in logs
+- No debug-level logs in production mode
+
+---
+
+## 9️⃣ INDUSTRY STANDARDS (ML + DATA)
+
+- Reproducibility (seed usage)
+- Versioned artifacts
+- Experiment metadata tracking
+- SHAP integration safe and model-aware
+- Feature importance export correct
+- Efficient recursive forecasting
+- No heavy computation inside loops
+- No duplicated training logic
+- Model aliasing implemented correctly
+- Config-driven SHAP sample size
+- Proper artifact naming conventions
+
+---
+
+## 🔟 SCALABILITY VALIDATION (MANDATORY)
+
+Check whether system is scalable for:
+
+### Data Scalability
+- Handles larger datasets safely
+- No full-data reprocessing in loops
+- No repeated heavy recalculation
+- Memory-safe operations
+- Avoids unnecessary copies
+
+### Model Scalability
+- Easy to add new models via config
+- No hardcoded model names
+- Tuning dynamically controlled
+- Ensemble dynamically controlled
+
+### Forecast Scalability
+- Recursive forecasting does NOT recompute entire history
+- Feature recalculation optimized for last-row only
+- Calendar merges efficient
+
+### Artifact Scalability
+- Versioned saving prevents overwriting
+- No uncontrolled artifact explosion
+- Alias file maintained
+
+---
+
+## 🔐 SECURITY & SAFETY
+
+- No unsafe path joins
+- No arbitrary file writes
+- No unsafe dynamic imports
+- No execution of untrusted input
+- No exposure of environment variables
+- No hardcoded credentials
+- No unsafe eval/exec usage
+
+---
+
+## 🧠 MLOps & PRODUCTION READINESS
+
+- Clear separation between training and inference
+- Prod mode skips heavy operations (if designed)
+- Proper artifact loading logic
+- Safe model loading
+- Metadata persistence
+- SHAP only executed when applicable
+- Safe fallback for unsupported models
+
+---
+
+#  HOW TO REPORT ISSUES
+
+IMPORTANT:  
+Do NOT dump all issues at once.
 
 For EACH file:
+
 1. Identify the **FIRST issue only**
 2. Explain:
-   • Why it is an error / risk / violation
-   • Which rule or contract it breaks
-   • Its impact (runtime, future reuse, bugs, maintainability)
+   - Why it is an error / risk / violation
+   - Which rule or contract it breaks
+   - Its impact (runtime, reuse, maintainability, correctness)
 3. Propose a **minimal, precise fix**
-4. WAIT for confirmation before moving forward
+4. WAIT for confirmation before proceeding
 
-Only after confirmation:
-→ Move to the NEXT issue in the SAME file  
-Only after the file is fully clean:
-→ Proceed to the NEXT file
+After confirmation:
+- Move to the NEXT issue in the SAME file
+- When file is fully clean:
+  - Mark file as **FROZEN**
+  - Proceed to the NEXT file
 
+---
 
-CHANGE RULES
-------------
-• Do NOT modify architecture
-• Do NOT rename frozen contracts
-• Do NOT add new behavior without approval
-• Suggest changes FIRST, wait for confirmation
-• After approval, provide the corrected code
-• Once finalized, mark the file as FROZEN
+#  CHANGE RULES
 
+- Do NOT modify architecture
+- Do NOT rename frozen contracts
+- Do NOT introduce new behavior without approval
+- Suggest changes FIRST
+- Wait for confirmation
+- After approval, provide corrected code
+- Mark file as FROZEN once validated
 
-MEMORY & CONTINUITY RULES
-------------------------
-TREAT STORED MEMORY AS:
-• Final
-• Authoritative
-• Immutable unless explicitly re-approved
+---
 
-NEXT CONVERSATION RULES:
-• Memory is the source of truth
-• Do NOT repeat completed steps
-• Resume exactly from last checkpoint
-• Enforce frozen rules strictly
+#  MEMORY & CONTINUITY RULES
+
+Treat stored memory as:
+
+- Final
+- Authoritative
+- Immutable unless explicitly re-approved
+
+Next conversation rules:
+
+- Memory is the source of truth
+- Do NOT repeat completed steps
+- Resume exactly from last checkpoint
+- Enforce frozen rules strictly
 
 Do NOT re-explain history unless explicitly asked.
-Confirm internally that memory is respected.
 
+---
 
-STARTING POINT
---------------
+#  VALIDATION STARTING POINT
+
 Begin validation from:
-→ FILE 1: config.yaml
+
+→ FILE 1: `config.yaml`
 
 Wait for confirmation after each issue and each file.
+
+---
+
+# FINAL GOAL
+
+After all files pass validation:
+
+Confirm:
+
+- System is production-safe  
+- System is leakage-free  
+- Config integrity verified  
+- Artifacts reproducible  
+- Security validated  
+- Scalable design verified  
+- MLOps readiness confirmed  
+
+Then mark project as:
+
+##  FROZEN – ENTERPRISE PRODUCTION READY

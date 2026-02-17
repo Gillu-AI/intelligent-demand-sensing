@@ -113,6 +113,7 @@ def _validate_required_sections(config: Dict[str, Any]) -> None:
         "data_schema",
         "ingestion",
         "features",
+        "data_cleaning",
         "modeling",
         "ensemble",
         "hyperparameter_tuning",

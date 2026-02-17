@@ -1,18 +1,36 @@
-# ==============================
+# =====================================================================
+# Intelligent Demand Sensing & Autonomous Inventory Planning (IDS)
+# =====================================================================
+# This configuration file is the SINGLE SOURCE OF TRUTH.
+# All pipelines (ingestion → features → training → forecasting → inventory → LLM)
+# must strictly follow this structure.
+#
+# Design Rules:
+# - No hardcoded values in code
+# - Fully config-driven execution
+# - Defensive validation enforced in config_loader
+# - Safe for multi-environment deployment
+# =====================================================================
+
+
+# =====================================================================
 # Project Metadata
-# ==============================
+# =====================================================================
 project:
   name: "Intelligent Demand Sensing & Autonomous Inventory Planning"
   short_name: "IDS"
   version: "1.0.0"
-  environment: "local"
+  environment: "local"        # local | dev | staging | prod
   timezone: "Asia/Kolkata"
 
 
-# ==============================
-# Paths
-# ==============================
+# =====================================================================
+# Paths Configuration
+# =====================================================================
+# All file-system references must originate here.
+# No pipeline may define paths directly.
 paths:
+
   data:
     raw: "data/raw"
     processed: "data/processed"
@@ -26,15 +44,16 @@ paths:
     plots: "output/plots"
     reports: "output/reports"
     model: "output/model"
+    scenarios: "output/scenarios"
 
   logs: "logs"
 
 
-# ==============================
+# =====================================================================
 # Logging & Reproducibility
-# ==============================
+# =====================================================================
 logging:
-  level: "INFO"
+  level: "INFO"          # DEBUG | INFO | WARNING | ERROR | CRITICAL
   log_to_file: true
   filename: "ids_project.log"
 
@@ -43,14 +62,14 @@ seeds:
   propagate_to_models: true
 
 
-# ==============================
-# Data Schema & Normalization
-# ==============================
+# =====================================================================
+# Data Schema & Column Normalization
+# =====================================================================
 data_schema:
 
-  # -------------------------
-  # Sales dataset schema
-  # -------------------------
+  # -------------------------------------------------------------------
+  # Sales Dataset Schema (Primary Demand Source)
+  # -------------------------------------------------------------------
   sales:
     date_column: "date"
     target_column: "total_sales"
@@ -69,26 +88,26 @@ data_schema:
       - day
 
     optional_column_policy:
-      on_missing: "warn"          # warn | ignore | error
+      on_missing: "warn"   # warn | ignore | error
 
-    normalize_columns: true     # Convert to lowercase and strip spaces
+    normalize_columns: true
 
-    rename_map:                  # Standardize column names across datasets
+    rename_map:
       date: ["date"]
       total_sales: ["total_sales", "sales", "total"]
       sales_open: ["sales_open", "open_sales"]
       sales_closed: ["sales_closed", "closed_sales"]
 
-# -------------------------
-  # Calendar dataset schema
-  # -------------------------
+  # -------------------------------------------------------------------
+  # Calendar Dataset Schema
+  # -------------------------------------------------------------------
   calendar:
     date_column: "date"
-    
+
     holiday_column: "is_holiday"
     festival_column: "is_festival"
     festival_name_column: "festival_name"
-    
+
     required_columns:
       - date
       - is_festival
@@ -109,27 +128,19 @@ data_schema:
       is_festival: ["festival", "festival_flag", "is_festival"]
       is_holiday: ["holiday", "is_holiday"]
       festival_name: ["festival_name", "fest_name"]
-     # is_promo: ["promo", "promotion", "is_promo"]
       weekday_weekend: ["weekday_weekend", "week_type"]
       day: ["day", "weekday", "day_of_week"]
-    
-# ==============================
+
+
+# =====================================================================
 # Ingestion Configuration
-# ==============================
+# =====================================================================
 ingestion:
 
-  # ------------------------------------------------
-  # Demand anchor dataset (MANDATORY)
-  # ------------------------------------------------
-  # This dataset must:
-  # - Be enabled
-  # - Contain the target_column (e.g., total_sales)
-  # - Act as the primary demand signal for the pipeline
+  # Primary demand dataset
   demand_source: "sales"
 
-  # ------------------------------------------------
-  # Global ingestion behavior (applies to ALL sources)
-  # ------------------------------------------------
+  # Global ingestion behavior
   header: true
   skip_rows: 0
 
@@ -143,66 +154,48 @@ ingestion:
   strict_load: true   # Fail entire pipeline if any dataset fails
 
 
-  # =================================================
-  # INPUT DATASETS (MULTIPLE, AUTOMATIC)
-  # =================================================
+  # -------------------------------------------------------------------
+  # Multi-source dataset configuration
+  # -------------------------------------------------------------------
   datasets:
 
-    # ------------------------------------------------
-    # 1. CSV
-    # ------------------------------------------------
+    # -------------------------
+    # CSV Source
+    # -------------------------
     calendar:
       enabled: true
       source_type: csv
-
-      # File is resolved as:
-      # paths.data.raw + file
       file: "calendar_holidays.csv"
 
       csv:
         delimiter: ","
         encoding: "utf-8"
 
-
-    # ------------------------------------------------
-    # 2. EXCEL (PRIMARY DEMAND SOURCE)
-    # ------------------------------------------------
+    # -------------------------
+    # Excel Source (Demand)
+    # -------------------------
     sales:
       enabled: true
       source_type: excel
-
       file: "sales_data.xlsx"
 
       excel:
-        # OPTION 1: Load a single sheet
-         sheet_name: "22-24"
+        sheet_name: "22-24"
 
-        # OPTION 2: Load selected multiple sheets (ACTIVE)
-       # sheet_names:
-        #  - "Calendar"
-        #  - "Holidays"
-        #  - "Sales"
-
-        # OPTION 3: Load ALL sheets
-        # load_all_sheets: true
-
-
-    # ------------------------------------------------
-    # 3. PARQUET
-    # ------------------------------------------------
+    # -------------------------
+    # Parquet Source
+    # -------------------------
     demand_history:
       enabled: false
       source_type: parquet
-
       file: "demand_history.parquet"
 
       parquet:
         engine: "pyarrow"
 
-
-    # ------------------------------------------------
-    # 4. DATABASE
-    # ------------------------------------------------
+    # -------------------------
+    # Database Source
+    # -------------------------
     master_data:
       enabled: false
       source_type: database
@@ -213,18 +206,14 @@ ingestion:
         port: 5432
         database: "inventory_db"
         schema: "public"
-
         table: "product_master"
-
         username_env: "DB_USER"
         password_env: "DB_PASS"
-
         fetch_size: 50000
 
-
-    # ------------------------------------------------
-    # 5. API
-    # ------------------------------------------------
+    # -------------------------
+    # API Source
+    # -------------------------
     promotions:
       enabled: false
       source_type: api
@@ -244,17 +233,11 @@ ingestion:
         timeout_seconds: 30
 
 
-        # Pagination (OPTIONAL)
-        # pagination:
-        #   enabled: true
-        #   page_param: "page"
-        #   size_param: "limit"
-        #   page_size: 1000
-
-# ==============================
+# =====================================================================
 # Feature Engineering
-# ==============================
+# =====================================================================
 features:
+
   time_features:
     enabled: true
     day_of_week: true
@@ -274,7 +257,7 @@ features:
 
   calendar_features:
     enabled: true
-  
+
   aggregation_features:
     enabled: true
     same_weekday_window: 4
@@ -284,10 +267,34 @@ features:
   demand_bucketing:
     method: "quantile"
     labels: ["Low", "Medium", "High"]
-# ==============================
-# Modeling (Base Training Params)
-# ==============================
+
+
+# =====================================================================
+# Data Cleaning Rules
+# =====================================================================
+data_cleaning:
+
+  sales:
+
+    duplicate:
+      unique_key: ["date"]
+      strategy: "keep_last"   # keep_first | keep_last | error | none
+
+    missing:
+      numeric: "interpolate"
+      categorical: "unknown"
+      boolean: "mode"
+      datetime: "none"
+
+    per_column:
+      total_sales: "ffill"
+
+
+# =====================================================================
+# Modeling Configuration
+# =====================================================================
 modeling:
+
   train_test_split:
     method: "time"
     test_days: 90
@@ -295,6 +302,7 @@ modeling:
   forecast_horizon_days: 365
 
   models:
+
     linear_regression:
       enabled: true
 
@@ -303,14 +311,13 @@ modeling:
       params:
         n_estimators: 200
         max_depth: 10
-        
+
     xgboost:
       enabled: true
       params:
         learning_rate: 0.1
         n_estimators: 150
         max_depth: 8
-       
 
     lightgbm:
       enabled: true
@@ -318,19 +325,24 @@ modeling:
         learning_rate: 0.05
         n_estimators: 200
         max_depth: -1
-       
+
     prophet:
       enabled: true
       yearly_seasonality: true
       weekly_seasonality: true
 
 
-# ==============================
-# Hyperparameter Tuning (Optional)
-# ==============================
+# =====================================================================
+# Hyperparameter Tuning
+# =====================================================================
 hyperparameter_tuning:
   enabled: true
-  only_for_enabled_models: true
+  tune_top_n: 3
+  cv_splits: 5
+  n_iter: 15
+
+  ridge:
+    alpha: [0.01, 0.1, 1, 10, 50, 100, 200]
 
   random_forest:
     n_estimators: [100, 200, 300]
@@ -339,37 +351,73 @@ hyperparameter_tuning:
   xgboost:
     learning_rate: [0.05, 0.1]
     max_depth: [6, 8]
+    n_estimators: [100, 150, 200]
+
+  lightgbm:
+    learning_rate: [0.01, 0.05]
+    max_depth: [-1, 10, 20]
+    n_estimators: [100, 200]
 
 
-# ==============================
-# Ensemble
-# ==============================
+# =====================================================================
+# Ensemble Configuration
+# =====================================================================
 ensemble:
   method: "stacking"
+  enabled: true
+  top_k_models: 3
   meta_model: "ridge"
-  use_tuned_models: true
 
 
-# ==============================
+# =====================================================================
 # Inventory Planning
-# ==============================
+# =====================================================================
 inventory:
   service_level: 0.95
-  forecast_consumption_window_days: 7
   lead_time_days: 7
   demand_variability_method: "std"
 
+  # Training / Simulation Only
+  simulated_current_inventory: 500
 
-# ==============================
-# LLM What-if Agent
-# ==============================
+
+# =====================================================================
+# Forecasting Configuration
+# =====================================================================
+forecasting:
+  enabled: true
+  frequency: "D"
+  start_date: "2025-03-23"
+  end_date: "2025-12-15"
+
+  rolling_summary:
+    enabled: true
+    window_months: 3
+
+  output:
+    include_weekly_summary: true
+    include_monthly_summary: true
+
+
+# =====================================================================
+# LLM What-If Agent Configuration
+# =====================================================================
 llm:
   enabled: true
-  runtime_control:                    # Protects: Cost, Compliance, Reliability, Release safety
+
+  # Scenario persistence (JSON-based storage)
+  storage_path: "data/external/scenario_store.json"
+  scenario_ttl_hours: 24
+
+  # Default runtime behavior
+  default_mode: "stateless"   # stateless | stateful
+
+  runtime_control:
     allow_in_production: false
     allow_in_training: true
     allow_in_ci: false
-  
+
+  # Model configuration
   model_name: "gpt-4"
   temperature: 0.2
   max_tokens: 500
@@ -380,10 +428,26 @@ llm:
     max_lead_time_multiplier: 3
 
 
-# ==============================
+# =====================================================================
 # Execution Controls
-# ==============================
+# =====================================================================
 execution:
-  mode: "train"                      # dev | train | prod | backfill
-  save_intermediate_outputs: true    # dev:true | train:true | prod:false | backfill:true
-  overwrite_existing_outputs: false  # false| false| false| true
+  mode: "train"   # dev | train | prod | backfill
+  save_intermediate_outputs: true
+  overwrite_existing_outputs: false
+
+
+# =====================================================================
+# SHAP Explainability
+# =====================================================================
+shap:
+  enabled: true
+  sample_size: 500
+
+
+# ==============================
+# Visualization
+# ==============================
+visualization:
+  enabled: true
+  skip_in_production: true
