@@ -1,3 +1,5 @@
+# src/utils/config_loader.py
+
 """
 Centralized configuration loader for the IDS project.
 
@@ -92,7 +94,6 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
     logger.info("Configuration loaded and validated successfully.")
 
-    # Defensive copy (top-level)
     return dict(config)
 
 
@@ -103,40 +104,39 @@ def _validate_required_sections(config: Dict[str, Any]) -> None:
     This enforces architectural contracts and prevents
     silent misconfiguration.
     """
-
-    # --- Required top-level sections ---
     required_sections = {
-        "project",
-        "paths",
-        "logging",
-        "seeds",
-        "data_schema",
-        "ingestion",
-        "features",
-        "data_cleaning",
-        "modeling",
-        "ensemble",
-        "hyperparameter_tuning",
-        "inventory",
-        "llm",
-        "execution"
-    }
+    "project",
+    "paths",
+    "logging",
+    "seeds",
+    "data_schema",
+    "ingestion",
+    "features",
+    "data_cleaning",
+    "modeling",
+    "ensemble",
+    "hyperparameter_tuning",
+    "inventory",
+    "forecasting",
+    "llm",
+    "shap",
+    "visualization",
+    "execution"
+}
 
-    # --- Missing sections ---
     missing = required_sections - config.keys()
     if missing:
         raise ConfigError(
             f"Missing required config sections: {sorted(missing)}"
         )
 
-    # --- Unknown sections ---
+    # Allow future extensibility but warn
     extra_sections = set(config.keys()) - required_sections
     if extra_sections:
-        raise ConfigError(
-            f"Unknown top-level config sections found: {sorted(extra_sections)}"
+        logger.warning(
+            f"Unknown top-level config sections detected: {sorted(extra_sections)}"
         )
 
-    # --- Section type validation ---
     for section in required_sections:
         if not isinstance(config.get(section), dict):
             raise ConfigError(
@@ -155,6 +155,17 @@ def _validate_required_sections(config: Dict[str, Any]) -> None:
         raise ConfigError(
             f"Missing required logging config keys: {sorted(missing_logging)}"
         )
+
+    # =========================================================
+    # SEEDS VALIDATION
+    # =========================================================
+    seeds_cfg = config.get("seeds", {})
+    if "global_seed" not in seeds_cfg:
+        raise ConfigError("Missing 'seeds.global_seed' configuration.")
+
+    if not isinstance(seeds_cfg["global_seed"], int):
+        raise ConfigError("seeds.global_seed must be an integer.")
+
     # =========================================================
     # EXECUTION MODE VALIDATION
     # =========================================================

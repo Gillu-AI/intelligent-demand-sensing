@@ -33,23 +33,16 @@ from typing import Dict
 def get_logger(config: Dict) -> logging.Logger:
     """
     Create and configure a project-wide logger.
-
-    This function ensures:
-    - Logger is initialized only once
-    - Duplicate handlers are avoided
-    - Log level is validated
-    - Optional file logging is respected
-
-    Parameters
-    ----------
-    config : Dict
-        Loaded configuration dictionary.
-
-    Returns
-    -------
-    logging.Logger
-        Configured logger instance.
     """
+
+    if not isinstance(config, dict):
+        raise ValueError("config must be a dictionary.")
+
+    if "logging" not in config:
+        raise ValueError("Missing 'logging' section in configuration.")
+
+    if "paths" not in config or "logs" not in config["paths"]:
+        raise ValueError("Missing 'paths.logs' configuration.")
 
     logger_name = "IDS"
     logger = logging.getLogger(logger_name)
@@ -58,11 +51,16 @@ def get_logger(config: Dict) -> logging.Logger:
     if logger.handlers:
         return logger
 
+    logging_cfg = config["logging"]
+
     # --------------------------------------------------
     # Validate Log Level
     # --------------------------------------------------
 
-    log_level_str = config["logging"]["level"].upper()
+    if "level" not in logging_cfg:
+        raise ValueError("Missing 'logging.level' in configuration.")
+
+    log_level_str = str(logging_cfg["level"]).upper()
 
     valid_levels = {
         "DEBUG": logging.DEBUG,
@@ -97,17 +95,25 @@ def get_logger(config: Dict) -> logging.Logger:
     # File Handler
     # --------------------------------------------------
 
-    if config["logging"]["log_to_file"]:
+    if logging_cfg.get("log_to_file", False):
+
+        if "filename" not in logging_cfg:
+            raise ValueError("Missing 'logging.filename' in configuration.")
+
+        filename = logging_cfg["filename"]
+
+        if not isinstance(filename, str) or not filename.strip():
+            raise ValueError("logging.filename must be a non-empty string.")
 
         log_dir = config["paths"]["logs"]
         os.makedirs(log_dir, exist_ok=True)
 
-        file_path = os.path.join(
-            log_dir,
-            config["logging"]["filename"]
-        )
+        file_path = os.path.join(log_dir, filename)
 
-        file_handler = logging.FileHandler(file_path)
+        file_handler = logging.FileHandler(
+            file_path,
+            encoding="utf-8"
+        )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 

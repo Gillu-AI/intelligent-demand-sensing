@@ -202,13 +202,17 @@ ingestion:
 
       database:
         engine: "postgresql"
-        host: "localhost"
-        port: 5432
-        database: "inventory_db"
+
+        host: "localhost"            # or "${DB_HOST}"
+        port: 5432                   # or "${DB_PORT}"
+        database: "inventory_db"     # or "${DB_NAME}"
+
         schema: "public"
         table: "product_master"
+
         username_env: "DB_USER"
         password_env: "DB_PASS"
+
         fetch_size: 50000
 
     # -------------------------
@@ -223,8 +227,8 @@ ingestion:
         url: "https://api.example.com/promotions"
 
         headers:
-          Authorization: "Bearer ${API_TOKEN}"
-          Content-Type: "application/json"
+          authorization_env: "API_TOKEN"
+          content-type: "application/json"
 
         params:
           region: "IN"

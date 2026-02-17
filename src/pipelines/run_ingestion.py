@@ -23,12 +23,13 @@ Design Principles:
 """
 
 import os
+from datetime import datetime
 import pandas as pd
 
 from utils.config_loader import load_config
 from utils.logger import get_logger
 from utils.helpers import ensure_directory
-from ingestion01.universal_loader import load_datasets
+from ingestion01.universal_loader import load_all_datasets
 from utils.data_profiler import profile_dataframe
 from utils.missing_handler import clean_dataframe
 
@@ -60,10 +61,31 @@ def run_ingestion():
     try:
 
         # ------------------------------------------------------
+        # Validate Required Config Sections
+        # ------------------------------------------------------
+
+        if "paths" not in config:
+            raise ValueError("Missing 'paths' configuration.")
+
+        if "data" not in config["paths"]:
+            raise ValueError("Missing 'paths.data' configuration.")
+
+        if "processed" not in config["paths"]["data"]:
+            raise ValueError("Missing 'paths.data.processed' configuration.")
+
+        if "output" not in config["paths"]:
+            raise ValueError("Missing 'paths.output' configuration.")
+
+        if "reports" not in config["paths"]["output"]:
+            raise ValueError("Missing 'paths.output.reports' configuration.")
+
+        # ------------------------------------------------------
         # 1. Load Datasets via Universal Loader
         # ------------------------------------------------------
 
-        datasets = load_datasets(config)
+        paths_cfg = config["paths"]
+
+        datasets = load_all_datasets(config, paths_cfg)
 
         demand_source = config["ingestion"]["demand_source"]
 
@@ -93,9 +115,11 @@ def run_ingestion():
         profile_output_dir = config["paths"]["output"]["reports"]
         ensure_directory(profile_output_dir)
 
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
         profile_output_path = os.path.join(
             profile_output_dir,
-            "data_profile_report.csv"
+            f"data_profile_report_{timestamp}.csv"
         )
 
         profile_report.to_csv(profile_output_path, index=False)
@@ -133,7 +157,6 @@ def run_ingestion():
                 f"Date column '{date_col}' missing after cleaning."
             )
 
-        # Enforce datetime & chronological integrity
         df_cleaned[date_col] = pd.to_datetime(
             df_cleaned[date_col],
             errors="raise"
@@ -156,7 +179,7 @@ def run_ingestion():
 
         output_path = os.path.join(
             processed_dir,
-            "cleaned_sales.parquet"
+            f"cleaned_sales_{timestamp}.parquet"
         )
 
         df_cleaned.to_parquet(output_path, index=False)
@@ -165,6 +188,6 @@ def run_ingestion():
         logger.info(f"Cleaned dataset saved to: {output_path}")
         logger.info("========== INGESTION PIPELINE COMPLETED ==========")
 
-    except Exception as e:
+    except Exception:
         logger.exception("Ingestion pipeline failed.")
         raise

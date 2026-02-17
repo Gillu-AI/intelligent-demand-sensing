@@ -1,7 +1,6 @@
 # src/modeling03/baseline_models.py
 
 from typing import Dict
-import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge
 
 
@@ -42,4 +41,13 @@ def get_ridge_model(config: Dict) -> Ridge:
     - Alpha will be set externally (via tuning or config).
     - Regularized linear model.
     """
+
+    if not isinstance(config, dict):
+        raise ValueError("config must be a dictionary.")
+
+    if "seeds" not in config or "global_seed" not in config["seeds"]:
+        raise ValueError(
+            "Missing 'seeds.global_seed' in configuration for Ridge model."
+        )
+
     return Ridge(random_state=config["seeds"]["global_seed"])

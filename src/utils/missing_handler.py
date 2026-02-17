@@ -41,34 +41,13 @@ def handle_duplicates(
 ) -> pd.DataFrame:
     """
     Remove duplicates based on specified unique key.
-
-    Parameters
-    ----------
-    unique_key : List[str]
-        Column(s) defining uniqueness.
-
-        Examples:
-        ---------
-        ["date"]                    # Time series
-        ["order_id"]                # Orders table
-        ["order_id", "product_id"]  # Composite key
-
-    strategy : str
-        Options:
-        --------
-        "keep_first"  -> Keep first occurrence
-        "keep_last"   -> Keep last occurrence
-        "error"       -> Raise error if duplicates exist
-        "none"        -> Do not remove duplicates
-
-    Returns
-    -------
-    pd.DataFrame
-        Deduplicated DataFrame.
     """
 
     if unique_key is None:
         return df
+
+    if not isinstance(unique_key, list):
+        raise ValueError("unique_key must be a list of column names.")
 
     duplicate_count = df.duplicated(subset=unique_key).sum()
 
@@ -97,27 +76,6 @@ def handle_duplicates(
 def _impute_numeric(series: pd.Series, strategy: str) -> pd.Series:
     """
     Numeric imputation strategies.
-
-    Options:
-    --------
-    "median"       -> Robust to outliers
-                     Good default for skewed distributions.
-
-    "mean"         -> Good if distribution symmetric.
-
-    "interpolate"  -> Best for time series / continuous signals.
-
-    "ffill"        -> Forward fill (time dependent data).
-
-    "bfill"        -> Backward fill.
-
-    "zero"         -> Fill with 0 (ONLY if business logic allows).
-
-    "none"         -> Leave as-is.
-
-    WARNING:
-    --------
-    Numeric imputation must consider business meaning.
     """
 
     if strategy == "median":
@@ -147,22 +105,14 @@ def _impute_numeric(series: pd.Series, strategy: str) -> pd.Series:
 def _impute_categorical(series: pd.Series, strategy: str) -> pd.Series:
     """
     Categorical imputation strategies.
-
-    Options:
-    --------
-    "unknown"  -> Add 'Unknown' category.
-                  Safest production option.
-
-    "mode"     -> Fill with most frequent category.
-                  Good if few categories.
-
-    "none"     -> Leave as-is.
     """
 
     if strategy == "unknown":
         return series.fillna("Unknown")
 
     if strategy == "mode":
+        if series.mode().empty:
+            return series
         return series.fillna(series.mode().iloc[0])
 
     if strategy == "none":
@@ -174,16 +124,11 @@ def _impute_categorical(series: pd.Series, strategy: str) -> pd.Series:
 def _impute_boolean(series: pd.Series, strategy: str) -> pd.Series:
     """
     Boolean imputation strategies.
-
-    Options:
-    --------
-    "mode"    -> Fill with most frequent boolean.
-    "false"   -> Force False.
-    "true"    -> Force True.
-    "none"    -> Leave as-is.
     """
 
     if strategy == "mode":
+        if series.mode().empty:
+            return series
         return series.fillna(series.mode().iloc[0])
 
     if strategy == "false":
@@ -205,38 +150,19 @@ def handle_missing_values(
 ) -> pd.DataFrame:
     """
     Apply config-driven missing value handling.
-
-    Config Example:
-    ---------------
-    data_cleaning:
-      sales:
-        missing:
-          numeric: "interpolate"
-          categorical: "unknown"
-          boolean: "mode"
-          datetime: "none"
-
-        per_column:
-          total_sales: "ffill"
-          price: "median"
-
-    Parameters
-    ----------
-    config : Dict
-        Full configuration dictionary.
-
-    dataset_name : str
-        Dataset identifier.
-
-    Returns
-    -------
-    pd.DataFrame
-        Cleaned DataFrame.
     """
+
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("df must be a pandas DataFrame.")
+
+    if dataset_name not in config.get("data_cleaning", {}):
+        raise ValueError(
+            f"Missing data_cleaning configuration for dataset '{dataset_name}'."
+        )
 
     df = df.copy()
 
-    cleaning_config = config.get("data_cleaning", {}).get(dataset_name, {})
+    cleaning_config = config["data_cleaning"][dataset_name]
     missing_config = cleaning_config.get("missing", {})
     per_column_override = cleaning_config.get("per_column", {})
 
@@ -245,10 +171,41 @@ def handle_missing_values(
         if df[col].isna().sum() == 0:
             continue
 
-        # Per-column override takes priority
+        # --------------------------------------------------
+        # Per-column override (dtype-aware routing)
+        # --------------------------------------------------
+
         if col in per_column_override:
-            df[col] = _impute_numeric(df[col], per_column_override[col])
+
+            strategy = per_column_override[col]
+
+            if pd.api.types.is_numeric_dtype(df[col]):
+                df[col] = _impute_numeric(df[col], strategy)
+
+            elif pd.api.types.is_bool_dtype(df[col]):
+                df[col] = _impute_boolean(df[col], strategy)
+
+            elif pd.api.types.is_datetime64_any_dtype(df[col]):
+                if strategy == "ffill":
+                    df[col] = df[col].fillna(method="ffill")
+                elif strategy == "bfill":
+                    df[col] = df[col].fillna(method="bfill")
+                elif strategy == "none":
+                    pass
+                else:
+                    raise ValueError(
+                        f"Invalid datetime strategy '{strategy}' "
+                        f"for column '{col}'."
+                    )
+
+            else:
+                df[col] = _impute_categorical(df[col], strategy)
+
             continue
+
+        # --------------------------------------------------
+        # Default Type-Based Strategy
+        # --------------------------------------------------
 
         if pd.api.types.is_numeric_dtype(df[col]):
             strategy = missing_config.get("numeric", "median")
@@ -260,8 +217,21 @@ def handle_missing_values(
 
         elif pd.api.types.is_datetime64_any_dtype(df[col]):
             strategy = missing_config.get("datetime", "none")
+
             if strategy == "ffill":
                 df[col] = df[col].fillna(method="ffill")
+
+            elif strategy == "bfill":
+                df[col] = df[col].fillna(method="bfill")
+
+            elif strategy == "none":
+                pass
+
+            else:
+                raise ValueError(
+                    f"Invalid datetime strategy '{strategy}' "
+                    f"for column '{col}'."
+                )
 
         else:
             strategy = missing_config.get("categorical", "unknown")

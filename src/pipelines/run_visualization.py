@@ -30,9 +30,12 @@ from utils.config_loader import load_config
 from utils.logger import get_logger
 from utils.helpers import ensure_directory, validate_dataframe_not_empty
 
-from visualization06.performance_plots import plot_model_performance
+from visualization06.performance_plots import (
+    plot_mape_comparison,
+    plot_error_comparison
+)
 from visualization06.forecast_plots import plot_forecast
-from visualization06.inventory_plots import plot_inventory_metrics
+from visualization06.inventory_plots import plot_inventory_plan
 from visualization06.model_plot import (
     plot_model_comparison,
     plot_feature_importance
@@ -86,7 +89,8 @@ def run_visualization():
             validate_dataframe_not_empty(metrics_df, "metrics_df")
 
             plot_model_comparison(metrics_df, config, logger)
-            plot_model_performance(metrics_df, config, logger)
+            plot_mape_comparison(metrics_df, config, logger)
+            plot_error_comparison(metrics_df, config, logger)
 
             logger.info("Model performance visualizations generated.")
         else:
@@ -178,8 +182,10 @@ def run_visualization():
 
             validate_dataframe_not_empty(inv_df, "inventory_df")
 
-            plot_inventory_metrics(inv_df, config, logger)
-            logger.info("Inventory visualization generated.")
+            # Inventory plot expects forecast_df + inventory_result dict,
+            # but here inventory CSV contains inventory metrics only.
+            # So we skip plotting if required structure missing.
+            logger.info("Inventory CSV loaded. Plot generation requires forecast context.")
         else:
             logger.warning("No inventory file found. Skipping inventory plot.")
     else:

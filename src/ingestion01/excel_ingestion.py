@@ -1,3 +1,5 @@
+# src/ingestion01/excel_ingestion.py
+
 """
 Excel ingestion module for the IDS project.
 
@@ -93,9 +95,9 @@ def ingest(
     raw_dir = Path(paths_cfg["data"]["raw"])
     file_name = dataset_cfg.get("file")
 
-    if not file_name:
+    if not isinstance(file_name, str) or not file_name:
         raise ValueError(
-            f"[EXCEL INGESTION] Missing 'file' for dataset '{dataset_name}'"
+            f"[EXCEL INGESTION] 'file' must be a non-empty string for dataset '{dataset_name}'"
         )
 
     file_path = raw_dir / file_name
@@ -108,7 +110,22 @@ def ingest(
     # --------------------------------------------------
     # Global ingestion config (MANDATORY)
     # --------------------------------------------------
+    required_global_keys = {"header", "skip_rows", "na_values"}
+    missing_keys = required_global_keys - global_cfg.keys()
+
+    if missing_keys:
+        raise ValueError(
+            f"[EXCEL INGESTION] Missing global ingestion keys for '{dataset_name}': "
+            f"{sorted(missing_keys)}"
+        )
+
     header_flag = global_cfg["header"]
+
+    if not isinstance(header_flag, bool):
+        raise ValueError(
+            f"[EXCEL INGESTION] 'header' must be boolean for dataset '{dataset_name}'"
+        )
+
     skip_rows = global_cfg["skip_rows"]
     na_values = global_cfg["na_values"]
 
@@ -151,6 +168,11 @@ def ingest(
     # --------------------------------------------------
     if has_sheet_name:
         sheet = excel_cfg["sheet_name"]
+        if not isinstance(sheet, (str, int)):
+            raise ValueError(
+                f"[EXCEL INGESTION] 'sheet_name' must be string or integer "
+                f"for dataset '{dataset_name}'"
+            )
 
         df = pd.read_excel(
             file_path,
@@ -183,6 +205,11 @@ def ingest(
             raise ValueError(
                 f"[EXCEL INGESTION] 'sheet_names' must be a non-empty list "
                 f"for dataset '{dataset_name}'"
+            )
+        if not all(isinstance(s, (str, int)) for s in sheets):
+            raise ValueError(
+                f"[EXCEL INGESTION] All entries in 'sheet_names' must be "
+                f"string or integer for dataset '{dataset_name}'"
             )
 
         dfs = pd.read_excel(

@@ -1,3 +1,5 @@
+# src/features02/lag_features.py
+
 from typing import Dict
 import pandas as pd
 
@@ -23,6 +25,9 @@ def _validate_sorted(df: pd.DataFrame, date_col: str) -> None:
     Ensures that lag and rolling computations operate strictly
     on past data. Prevents silent leakage caused by unsorted input.
     """
+    if date_col not in df.columns:
+        raise ValueError(f"Column '{date_col}' not found for lag validation.")
+
     if not df[date_col].is_monotonic_increasing:
         raise ValueError(
             "DataFrame must be sorted by date before applying lag features."
@@ -64,8 +69,11 @@ def add_lag_features(
     - Respects config-driven lag values.
     """
 
-    if not config["features"]["lag_features"]["enabled"]:
+    if not config.get("features", {}).get("lag_features", {}).get("enabled", False):
         return df
+
+    if "data_schema" not in config or "sales" not in config["data_schema"]:
+        raise ValueError("Missing 'data_schema.sales' configuration.")
 
     df = df.copy()
 
@@ -73,7 +81,13 @@ def add_lag_features(
     target_col = config["data_schema"]["sales"]["target_column"]
     lags = config["features"]["lag_features"]["lags"]
 
+    if not isinstance(lags, list) or not all(isinstance(l, int) and l > 0 for l in lags):
+        raise ValueError("Lag values must be a list of positive integers.")
+
     _validate_sorted(df, date_col)
+
+    if target_col not in df.columns:
+        raise ValueError(f"Column '{target_col}' not found for lag features.")
 
     for lag in lags:
         df[f"{target_col}_lag_{lag}"] = df[target_col].shift(lag)
@@ -116,8 +130,11 @@ def add_rolling_features(
     - Respects config-driven window sizes.
     """
 
-    if not config["features"]["rolling_features"]["enabled"]:
+    if not config.get("features", {}).get("rolling_features", {}).get("enabled", False):
         return df
+
+    if "data_schema" not in config or "sales" not in config["data_schema"]:
+        raise ValueError("Missing 'data_schema.sales' configuration.")
 
     df = df.copy()
 
@@ -125,7 +142,13 @@ def add_rolling_features(
     target_col = config["data_schema"]["sales"]["target_column"]
     windows = config["features"]["rolling_features"]["windows"]
 
+    if not isinstance(windows, list) or not all(isinstance(w, int) and w > 0 for w in windows):
+        raise ValueError("Rolling windows must be a list of positive integers.")
+
     _validate_sorted(df, date_col)
+
+    if target_col not in df.columns:
+        raise ValueError(f"Column '{target_col}' not found for rolling features.")
 
     shifted_series = df[target_col].shift(1)
 

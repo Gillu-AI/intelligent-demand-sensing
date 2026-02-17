@@ -1,3 +1,5 @@
+# src/ingestion01/parquet_ingestion.py
+
 """
 Parquet ingestion module for the IDS project.
 
@@ -80,13 +82,16 @@ def ingest(
     # --------------------------------------------------
     # Resolve file path
     # --------------------------------------------------
-    if "file" not in dataset_cfg:
+    file_name = dataset_cfg.get("file")
+
+    if not isinstance(file_name, str) or not file_name:
         raise ValueError(
-            f"[PARQUET INGESTION] Missing 'file' for dataset '{dataset_name}'"
+            f"[PARQUET INGESTION] 'file' must be a non-empty string "
+            f"for dataset '{dataset_name}'"
         )
 
     raw_dir = Path(paths_cfg["data"]["raw"])
-    file_path = raw_dir / dataset_cfg["file"]
+    file_path = raw_dir / file_name
 
     if not file_path.exists():
         raise FileNotFoundError(

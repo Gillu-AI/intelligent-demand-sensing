@@ -1,3 +1,5 @@
+# src/ingestion01/csv_ingestion.py
+
 """
 CSV ingestion module for the IDS project.
 
@@ -68,10 +70,10 @@ def ingest(
     raw_dir = Path(paths_cfg["data"]["raw"])
     file_name = dataset_cfg.get("file")
 
-    if not file_name:
+    if not isinstance(file_name, str) or not file_name:
         raise ValueError(
-            f"[CSV INGESTION] Missing 'file' for dataset '{dataset_name}'"
-        )
+            f"[CSV INGESTION] 'file' must be a non-empty string for dataset '{dataset_name}'"
+        ) 
 
     file_path = raw_dir / file_name
 
@@ -83,11 +85,27 @@ def ingest(
     # --------------------------------------------------
     # Global ingestion config (MANDATORY)
     # --------------------------------------------------
-    header_flag = global_cfg["header"]
-    skip_rows = global_cfg["skip_rows"]
-    na_values = global_cfg["na_values"]
+    
+    required_global_keys = {"header", "skip_rows", "na_values"}
+    missing_keys = required_global_keys - global_cfg.keys()
 
-    header = 0 if header_flag else None
+    if missing_keys:
+        raise ValueError(
+            f"[CSV INGESTION] Missing global ingestion keys for '{dataset_name}': "
+            f"{sorted(missing_keys)}"
+        )
+
+        header_flag = global_cfg["header"]
+
+        if not isinstance(header_flag, bool):
+            raise ValueError(
+                f"[CSV INGESTION] 'header' must be boolean for dataset '{dataset_name}'"
+            )
+
+        skip_rows = global_cfg["skip_rows"]
+        na_values = global_cfg["na_values"]
+
+        header = 0 if header_flag else None
 
     # --------------------------------------------------
     # CSV-specific config (MANDATORY)
@@ -111,6 +129,16 @@ def ingest(
 
     delimiter = csv_cfg["delimiter"]
     encoding = csv_cfg["encoding"]
+
+    if not isinstance(delimiter, str):
+        raise ValueError(
+            f"[CSV INGESTION] 'delimiter' must be string for dataset '{dataset_name}'"
+        )
+
+    if not isinstance(encoding, str):
+        raise ValueError(
+            f"[CSV INGESTION] 'encoding' must be string for dataset '{dataset_name}'"
+        )
 
     # --------------------------------------------------
     # Read CSV

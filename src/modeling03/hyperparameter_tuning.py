@@ -32,8 +32,33 @@ def tune_model(model, param_grid: Dict, X, y, config: Dict):
     best_model : tuned model
     """
 
-    cv_splits = config["hyperparameter_tuning"]["cv_splits"]
-    n_iter = config["hyperparameter_tuning"]["n_iter"]
+    if "hyperparameter_tuning" not in config:
+        raise ValueError("Missing 'hyperparameter_tuning' configuration.")
+
+    tuning_cfg = config["hyperparameter_tuning"]
+
+    if not tuning_cfg.get("enabled", False):
+        return model
+
+    if not param_grid:
+        raise ValueError("param_grid cannot be empty for hyperparameter tuning.")
+
+    if X.empty or y.empty:
+        raise ValueError("X and y must not be empty for hyperparameter tuning.")
+
+    cv_splits = tuning_cfg.get("cv_splits")
+    n_iter = tuning_cfg.get("n_iter")
+
+    if not isinstance(cv_splits, int) or cv_splits < 2:
+        raise ValueError("cv_splits must be integer >= 2.")
+
+    if not isinstance(n_iter, int) or n_iter <= 0:
+        raise ValueError("n_iter must be positive integer.")
+
+    if "seeds" not in config or "global_seed" not in config["seeds"]:
+        raise ValueError("Missing 'seeds.global_seed' configuration.")
+
+    seed = config["seeds"]["global_seed"]
 
     tscv = TimeSeriesSplit(n_splits=cv_splits)
 
@@ -44,7 +69,7 @@ def tune_model(model, param_grid: Dict, X, y, config: Dict):
         cv=tscv,
         scoring="neg_mean_absolute_percentage_error",
         n_jobs=-1,
-        random_state=42
+        random_state=seed,
     )
 
     search.fit(X, y)

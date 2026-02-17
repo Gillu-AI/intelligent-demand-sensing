@@ -1,3 +1,5 @@
+# src/ingestion01/database_ingestion.py
+
 """
 Database ingestion module for the IDS project.
 
@@ -113,7 +115,13 @@ def ingest(
         raise ValueError(
             f"[DB INGESTION] Missing DB config keys for '{dataset_name}': {sorted(missing)}"
         )
+    
+    if not isinstance(db_cfg["port"], int):
+        raise ValueError(
+            f"[DB INGESTION] 'port' must be integer for '{dataset_name}'"
+        )
 
+   
     engine_str = (
         f"{db_cfg['engine']}://{user}:{password}"
         f"@{db_cfg['host']}:{db_cfg['port']}"
@@ -126,13 +134,35 @@ def ingest(
 
     engine = create_engine(engine_str)
 
+
     # --------------------------------------------------
-    # Build SQL
+    # Build SQL / Execute Load
     # --------------------------------------------------
     if "query" in db_cfg:
+
         sql = db_cfg["query"]
-        mode = "query"
+        logger.info(
+            f"[DB INGESTION] Executing query load for dataset '{dataset_name}'"
+        )
+
+        result = pd.read_sql(
+            sql,
+            con=engine,
+            chunksize=db_cfg.get("fetch_size"),
+        )
+
+        if isinstance(result, pd.DataFrame):
+            df = result
+        else:
+            chunks = list(result)
+            if not chunks:
+                raise ValueError(
+                    f"[DB INGESTION] Query returned no data for '{dataset_name}'"
+                )
+            df = pd.concat(chunks, ignore_index=True)
+
     elif "table" in db_cfg:
+
         table = db_cfg["table"]
         schema = db_cfg.get("schema")
 
@@ -141,38 +171,31 @@ def ingest(
                 f"[DB INGESTION] 'table' must be a string for '{dataset_name}'"
             )
 
-        sql = (
-            f"SELECT * FROM {schema}.{table}"
-            if schema else f"SELECT * FROM {table}"
+        logger.info(
+            f"[DB INGESTION] Executing table load for dataset '{dataset_name}'"
         )
-        mode = "table"
+
+        result = pd.read_sql_table(
+            table_name=table,
+            con=engine,
+            schema=schema,
+            chunksize=db_cfg.get("fetch_size"),
+        )
+
+        if isinstance(result, pd.DataFrame):
+            df = result
+        else:
+            chunks = list(result)
+            if not chunks:
+                raise ValueError(
+                    f"[DB INGESTION] Table returned no data for '{dataset_name}'"
+                )
+            df = pd.concat(chunks, ignore_index=True)
+
     else:
         raise ValueError(
             f"[DB INGESTION] Either 'table' or 'query' must be defined for '{dataset_name}'"
         )
-
-    logger.info(
-        f"[DB INGESTION] Executing {mode} load for dataset '{dataset_name}'"
-    )
-
-    # --------------------------------------------------
-    # Execute query
-    # --------------------------------------------------
-    result = pd.read_sql(
-        sql,
-        con=engine,
-        chunksize=db_cfg.get("fetch_size"),
-    )
-
-    if isinstance(result, pd.DataFrame):
-        df = result
-    else:
-        chunks = list(result)
-        if not chunks:
-            raise ValueError(
-                f"[DB INGESTION] Query returned no data for '{dataset_name}'"
-            )
-        df = pd.concat(chunks, ignore_index=True)
 
     if not isinstance(df, pd.DataFrame):
         raise TypeError(

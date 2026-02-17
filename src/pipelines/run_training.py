@@ -5,19 +5,6 @@ Training Pipeline Orchestration
 ================================
 
 Enterprise-grade modeling workflow for IDS.
-
-Capabilities:
--------------
-- Strict time-based split (leakage safe)
-- Base model training (config-driven)
-- Dynamic Top-N hyperparameter tuning
-- Stacking ensemble (Top-K)
-- Primary metric: MAPE (%)
-- Timestamped model versioning
-- Feature importance export (tree models)
-- SHAP explainability (delegated to explainability_SHAP.py)
-- Experiment metadata snapshot
-- Production-safe logging
 """
 
 import os
@@ -56,10 +43,6 @@ from modeling03.explainability_SHAP import generate_shap_explainability
 from utils.model_utils import train_model
 
 
-# ==========================================================
-# Model - Config Mapping
-# ==========================================================
-
 MODEL_CONFIG_MAP = {
     "LinearRegression": "linear_regression",
     "Ridge": "ridge",
@@ -70,18 +53,7 @@ MODEL_CONFIG_MAP = {
 }
 
 
-# ==========================================================
-# Time-Based Split
-# ==========================================================
-
 def time_based_split(df: pd.DataFrame, config: Dict):
-    """
-    Perform strict chronological split.
-
-    Prevents data leakage by ensuring test data
-    is always future relative to training data.
-    """
-
     date_col = config["data_schema"]["sales"]["date_column"]
     test_days = config["modeling"]["train_test_split"]["test_days"]
 
@@ -91,13 +63,24 @@ def time_based_split(df: pd.DataFrame, config: Dict):
         raise ValueError("Configured test_days exceeds dataset size.")
 
     split_index = len(df) - test_days
-
     return df.iloc[:split_index], df.iloc[split_index:]
 
 
-# ==========================================================
-# Main Training Orchestrator
-# ==========================================================
+def _load_latest_model_ready(processed_path: str) -> pd.DataFrame:
+
+    files = [
+        f for f in os.listdir(processed_path)
+        if f.startswith("model_ready_") and f.endswith(".parquet")
+    ]
+
+    if not files:
+        raise FileNotFoundError(
+            "No versioned model_ready_*.parquet found."
+        )
+
+    files.sort(reverse=True)
+    return pd.read_parquet(os.path.join(processed_path, files[0]))
+
 
 def run_training():
 
@@ -106,19 +89,14 @@ def run_training():
 
     logger.info("Starting training pipeline.")
 
-    # --------------------------------------------------
-    # Load Data
-    # --------------------------------------------------
+    required_sections = ["modeling", "paths"]
+    for sec in required_sections:
+        if sec not in config:
+            raise ValueError(f"Missing '{sec}' configuration.")
 
-    data_path = os.path.join(
-        config["paths"]["data"]["processed"],
-        "model_ready.parquet"
-    )
+    processed_path = config["paths"]["data"]["processed"]
 
-    if not os.path.exists(data_path):
-        raise FileNotFoundError("model_ready.parquet not found.")
-
-    df = pd.read_parquet(data_path)
+    df = _load_latest_model_ready(processed_path)
 
     train_df, test_df = time_based_split(df, config)
 
@@ -127,7 +105,6 @@ def run_training():
     X_train, y_train = prepare_model_data(
         train_df, config, drop_columns=(date_col,)
     )
-
     X_test, y_test = prepare_model_data(
         test_df, config, drop_columns=(date_col,)
     )
@@ -146,25 +123,24 @@ def run_training():
         results[model_name] = evaluate_regression_model(y_test, preds)
         trained_models[model_name] = trained
 
-    # Linear
-    if config["modeling"]["models"]["linear_regression"]["enabled"]:
+    modeling_cfg = config["modeling"]["models"]
+
+    if modeling_cfg["linear_regression"]["enabled"]:
         _train_and_evaluate("LinearRegression", get_linear_regression_model())
 
-    if config["modeling"]["models"]["ridge"]["enabled"]:
+    if modeling_cfg["ridge"]["enabled"]:
         _train_and_evaluate("Ridge", get_ridge_model(config))
 
-    # Trees
-    if config["modeling"]["models"]["random_forest"]["enabled"]:
+    if modeling_cfg["random_forest"]["enabled"]:
         _train_and_evaluate("RandomForest", get_random_forest_model(config))
 
-    if config["modeling"]["models"]["xgboost"]["enabled"]:
+    if modeling_cfg["xgboost"]["enabled"]:
         _train_and_evaluate("XGBoost", get_xgboost_model(config))
 
-    if config["modeling"]["models"]["lightgbm"]["enabled"]:
+    if modeling_cfg["lightgbm"]["enabled"]:
         _train_and_evaluate("LightGBM", get_lightgbm_model(config))
 
-    # Prophet
-    if config["modeling"]["models"]["prophet"]["enabled"]:
+    if modeling_cfg["prophet"]["enabled"]:
         prophet_model = ProphetRegressor(config)
         prophet_model.fit(train_df)
         preds = prophet_model.predict(test_df)
@@ -174,11 +150,13 @@ def run_training():
         )
         trained_models["Prophet"] = prophet_model
 
+    if not results:
+        raise ValueError("No models were enabled for training.")
+
     metrics_df = build_metrics_dataframe(results)
-    metrics_df = metrics_df.sort_values(by="MAPE (%)")
 
     # ==================================================
-    # Hyperparameter Tuning
+    # Hyperparameter Tuning (fresh base models)
     # ==================================================
 
     if config["hyperparameter_tuning"]["enabled"]:
@@ -186,18 +164,31 @@ def run_training():
         top_n = config["hyperparameter_tuning"]["tune_top_n"]
         top_models = metrics_df.index[:top_n]
 
-        logger.info(f"Tuning Top {top_n} models: {list(top_models)}")
-
         for model_name in top_models:
 
             config_key = MODEL_CONFIG_MAP.get(model_name)
+            tuning_cfg = config["hyperparameter_tuning"].get(config_key)
 
-            if config_key not in config["hyperparameter_tuning"]:
+            if not tuning_cfg:
                 continue
 
+            # recreate base model fresh
+            base_model_factory = {
+                "LinearRegression": get_linear_regression_model,
+                "Ridge": lambda: get_ridge_model(config),
+                "RandomForest": lambda: get_random_forest_model(config),
+                "XGBoost": lambda: get_xgboost_model(config),
+                "LightGBM": lambda: get_lightgbm_model(config),
+            }
+
+            if model_name not in base_model_factory:
+                continue
+
+            fresh_model = base_model_factory[model_name]()
+
             tuned_model = tune_model(
-                trained_models[model_name],
-                config["hyperparameter_tuning"][config_key],
+                fresh_model,
+                tuning_cfg,
                 X_train,
                 y_train,
                 config
@@ -211,7 +202,6 @@ def run_training():
             trained_models[f"{model_name}_Tuned"] = tuned_model
 
         metrics_df = build_metrics_dataframe(results)
-        metrics_df = metrics_df.sort_values(by="MAPE (%)")
 
     # ==================================================
     # Ensemble
@@ -221,8 +211,6 @@ def run_training():
 
         top_k = config["ensemble"]["top_k_models"]
         top_models = metrics_df.index[:top_k]
-
-        logger.info(f"Building stacking ensemble using: {list(top_models)}")
 
         ensemble_base_models = {
             name: trained_models[name] for name in top_models
@@ -239,10 +227,12 @@ def run_training():
         results["StackingEnsemble"] = \
             evaluate_regression_model(y_test, ensemble_preds)
 
-        trained_models["StackingEnsemble"] = meta_model
+        trained_models["StackingEnsemble"] = {
+            "base_models": ensemble_base_models,
+            "meta_model": meta_model
+        }
 
         metrics_df = build_metrics_dataframe(results)
-        metrics_df = metrics_df.sort_values(by="MAPE (%)")
 
     # ==================================================
     # Final Selection
@@ -254,7 +244,7 @@ def run_training():
     logger.info(f"Best model selected: {best_model_name}")
 
     # ==================================================
-    # Saving Artifacts
+    # Saving
     # ==================================================
 
     model_dir = config["paths"]["output"]["model"]
@@ -267,7 +257,6 @@ def run_training():
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
 
-    # Save model (versioned + latest alias)
     joblib.dump(
         best_model,
         os.path.join(model_dir, f"best_model_{timestamp}.pkl")
@@ -282,34 +271,18 @@ def run_training():
         os.path.join(metrics_dir, f"model_comparison_{timestamp}.csv")
     )
 
-    # Feature Importance (Tree models only)
-    if hasattr(best_model, "feature_importances_"):
-
-        importance_df = pd.DataFrame({
-            "feature": X_train.columns,
-            "importance": best_model.feature_importances_
-        }).sort_values(by="importance", ascending=False)
-
-        importance_df.to_csv(
-            os.path.join(
-                model_dir,
-                f"feature_importance_{timestamp}.csv"
-            ),
-            index=False
+    # SHAP only if single sklearn model
+    if hasattr(best_model, "predict") and not isinstance(best_model, dict):
+        generate_shap_explainability(
+            model=best_model,
+            X_train=X_train,
+            X_test=X_test,
+            model_name=best_model_name,
+            output_dir=plots_dir,
+            config=config,
+            timestamp=timestamp
         )
 
-    # SHAP (delegated to module)
-    generate_shap_explainability(
-        model=best_model,
-        X_train=X_train,
-        X_test=X_test,
-        model_name=best_model_name,
-        output_dir=plots_dir,
-        config=config,
-        timestamp=timestamp
-    )
-
-    # Metadata
     metadata = {
         "timestamp": timestamp,
         "best_model": best_model_name,

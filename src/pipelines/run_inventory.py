@@ -32,9 +32,14 @@ from datetime import datetime
 from utils.config_loader import load_config
 from utils.logger import get_logger
 from utils.helpers import ensure_directory
+
 from modeling03.forecasting_utils import recursive_forecast
 from inventory04.inventory_planning import generate_inventory_plan
 
+
+# ==========================================================
+# Main Inventory Pipeline
+# ==========================================================
 
 def run_inventory():
     """
@@ -44,10 +49,12 @@ def run_inventory():
     config = load_config()
     logger = get_logger(config)
 
-    logger.info("Starting inventory pipeline.")
+    logger.info("========== INVENTORY PIPELINE STARTED ==========")
 
     if not config.get("forecasting", {}).get("enabled", False):
         raise ValueError("Forecasting is disabled in config.")
+
+    execution_mode = config.get("execution", {}).get("mode", "dev")
 
     # ------------------------------------------------------
     # 1. Load Best Model
@@ -84,10 +91,17 @@ def run_inventory():
 
     df = pd.read_parquet(data_path)
 
-    date_col = config["data_schema"]["sales"]["date_column"]
-    target_col = config["data_schema"]["sales"]["target_column"]
+    sales_schema = config["data_schema"]["sales"]
+    date_col = sales_schema["date_column"]
+    target_col = sales_schema["target_column"]
 
-    df[date_col] = pd.to_datetime(df[date_col])
+    if date_col not in df.columns:
+        raise ValueError(f"{date_col} missing in model_ready dataset.")
+
+    if target_col not in df.columns:
+        raise ValueError(f"{target_col} missing in model_ready dataset.")
+
+    df[date_col] = pd.to_datetime(df[date_col], errors="raise")
     df = df.sort_values(by=date_col).reset_index(drop=True)
 
     logger.info(f"Loaded historical dataset with shape: {df.shape}")
@@ -107,7 +121,7 @@ def run_inventory():
     future_df = recursive_forecast(
         model=model,
         historical_df=df,
-        calendar_df=pd.DataFrame(),
+        calendar_df=pd.DataFrame(),  # Calendar optional (config-driven)
         config=config
     )
 
@@ -117,7 +131,7 @@ def run_inventory():
     logger.info(f"Generated forecast with shape: {future_df.shape}")
 
     # ------------------------------------------------------
-    # 5. Weekly Summary (Week-End Rows Only)
+    # 5. Weekly Summary (Week-End Only)
     # ------------------------------------------------------
 
     if config["forecasting"]["output"]["include_weekly_summary"]:
@@ -201,7 +215,18 @@ def run_inventory():
     # 8. Inventory Planning
     # ------------------------------------------------------
 
-    current_inventory = config["inventory"]["simulated_current_inventory"]
+    inventory_cfg = config["inventory"]
+
+    if execution_mode == "prod" and inventory_cfg.get("simulated_current_inventory") is not None:
+        raise ValueError(
+            "simulated_current_inventory is not allowed in production mode. "
+            "Configure real inventory source."
+        )
+
+    current_inventory = inventory_cfg.get("simulated_current_inventory")
+
+    if current_inventory is None:
+        raise ValueError("Current inventory value not configured.")
 
     inventory_result = generate_inventory_plan(
         historical_demand=historical_demand,
@@ -209,6 +234,9 @@ def run_inventory():
         current_inventory=current_inventory,
         config=config
     )
+
+    # Add inventory reference to result (for visualization consistency)
+    inventory_result["current_inventory"] = current_inventory
 
     inventory_output_dir = config["paths"]["output"]["inventory"]
     ensure_directory(inventory_output_dir)
@@ -231,19 +259,17 @@ def run_inventory():
     logger.info("Inventory planning completed successfully.")
 
     # ------------------------------------------------------
-    # 9. LLM Layer
+    # 9. LLM Scenario Layer
     # ------------------------------------------------------
 
     if config.get("llm", {}).get("enabled", False):
 
         logger.info("Launching LLM scenario CLI.")
 
-        from llm05.scenario_cli import run_scenario_cli
+        from llm05.scenario_cli import run_cli
 
-        run_scenario_cli(
-            baseline_forecast_path=forecast_path,
-            config=config,
-            logger=logger
+        run_cli(
+            baseline_forecast_path=forecast_path
         )
 
-    logger.info("Inventory pipeline finished.")
+    logger.info("========== INVENTORY PIPELINE COMPLETED ==========")

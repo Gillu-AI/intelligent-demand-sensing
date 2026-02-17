@@ -45,10 +45,48 @@ def generate_inventory_plan(
         - recommended_order_qty
     """
 
-    service_level = config["inventory"]["service_level"]
-    lead_time = config["inventory"]["lead_time_days"]
+    # --------------------------------------------------
+    # Defensive Input Validation
+    # --------------------------------------------------
 
-    # Average daily demand from forecast window
+    if not isinstance(historical_demand, pd.Series):
+        raise ValueError("historical_demand must be a pandas Series.")
+
+    if not isinstance(forecast_series, pd.Series):
+        raise ValueError("forecast_series must be a pandas Series.")
+
+    if forecast_series.empty:
+        raise ValueError("forecast_series cannot be empty.")
+
+    if not isinstance(current_inventory, (int, float)):
+        raise ValueError("current_inventory must be numeric.")
+
+    if "inventory" not in config:
+        raise ValueError("Missing 'inventory' configuration.")
+
+    inventory_cfg = config["inventory"]
+
+    required_keys = {"service_level", "lead_time_days"}
+    missing = required_keys - inventory_cfg.keys()
+
+    if missing:
+        raise ValueError(
+            f"Missing inventory config keys: {sorted(missing)}"
+        )
+
+    service_level = inventory_cfg["service_level"]
+    lead_time = inventory_cfg["lead_time_days"]
+
+    if not (0 < service_level < 1):
+        raise ValueError("service_level must be between 0 and 1.")
+
+    if not isinstance(lead_time, (int, float)) or lead_time <= 0:
+        raise ValueError("lead_time_days must be a positive number.")
+
+    # --------------------------------------------------
+    # Core Calculations
+    # --------------------------------------------------
+
     avg_daily_demand = forecast_series.mean()
 
     safety_stock = calculate_safety_stock(
@@ -62,7 +100,7 @@ def generate_inventory_plan(
     order_qty = max(0, reorder_point - current_inventory)
 
     return {
-        "safety_stock": round(safety_stock, 2),
-        "reorder_point": round(reorder_point, 2),
-        "recommended_order_qty": round(order_qty, 2),
+        "safety_stock": round(float(safety_stock), 2),
+        "reorder_point": round(float(reorder_point), 2),
+        "recommended_order_qty": round(float(order_qty), 2),
     }

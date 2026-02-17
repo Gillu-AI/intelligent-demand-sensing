@@ -1,3 +1,4 @@
+# src/utils/schema_utils.py
 """
 Schema validation and normalization utilities for IDS.
 
@@ -48,16 +49,6 @@ def normalize_column_names(columns: Iterable[str]) -> List[str]:
     - Replace spaces and hyphens with underscores
     - Remove non-alphanumeric characters
     - Collapse multiple underscores
-
-    Parameters
-    ----------
-    columns : Iterable[str]
-        Original column names
-
-    Returns
-    -------
-    List[str]
-        Normalized column names
     """
 
     normalized = []
@@ -84,35 +75,46 @@ def normalize_column_names(columns: Iterable[str]) -> List[str]:
 # ---------------------------------------------------------------------
 # Rename Mapping
 # ---------------------------------------------------------------------
-def apply_rename_map(columns: Iterable[str], rename_map: Dict[str, List[str]]) -> List[str]:
+def apply_rename_map(
+    columns: Iterable[str],
+    rename_map: Dict[str, List[str]]
+) -> List[str]:
     """
     Apply flexible rename mapping to column names.
 
     This function does NOT perform duplicate detection.
     Duplicate detection must be done explicitly after this step.
-
-    Parameters
-    ----------
-    columns : Iterable[str]
-        Normalized column names
-    rename_map : Dict[str, List[str]]
-        Mapping of alternative names to canonical names
-
-    Returns
-    -------
-    List[str]
-        Column names after applying rename rules
     """
 
     reverse_map = {}
+    seen_aliases = set()
 
     for canonical, aliases in rename_map.items():
+
+        if not isinstance(canonical, str):
+            raise SchemaValidationError(
+                f"Canonical column name must be string. Found: {type(canonical).__name__}"
+            )
+
         if not isinstance(aliases, (list, tuple)):
             raise SchemaValidationError(
                 f"Rename map for '{canonical}' must be a list of aliases."
             )
+
         for alias in aliases:
+
+            if not isinstance(alias, str):
+                raise SchemaValidationError(
+                    f"Alias for '{canonical}' must be string. Found: {type(alias).__name__}"
+                )
+
+            if alias in seen_aliases:
+                raise SchemaValidationError(
+                    f"Duplicate alias detected in rename_map: '{alias}'"
+                )
+
             reverse_map[alias] = canonical
+            seen_aliases.add(alias)
 
     renamed = []
 
@@ -131,16 +133,6 @@ def apply_rename_map(columns: Iterable[str], rename_map: Dict[str, List[str]]) -
 def detect_duplicate_columns(columns: Iterable[str]) -> None:
     """
     Detect duplicate column names after normalization and renaming.
-
-    Parameters
-    ----------
-    columns : Iterable[str]
-        Final column names after all transformations
-
-    Raises
-    ------
-    SchemaValidationError
-        If duplicate column names are found
     """
 
     seen = set()
@@ -164,44 +156,19 @@ def detect_duplicate_columns(columns: Iterable[str]) -> None:
 # Required & Optional Column Validation
 # ---------------------------------------------------------------------
 def validate_required_columns(
-    columns: Iterable[str], required_columns: Iterable[str],
+    columns: Iterable[str],
+    required_columns: Iterable[str],
     optional_columns: Iterable[str] | None = None,
     optional_policy: str = "ignore"
 ) -> None:
     """
     Validate presence of required and optional columns according
     to configured schema policy.
-
-    This function enforces:
-    - All required columns must be present (hard failure)
-    - Optional columns are handled based on policy:
-        - "ignore": do nothing
-        - "warn": log a warning
-        - "error": raise an exception
-
-    Parameters
-    ----------
-    columns : Iterable[str]
-        Available column names after normalization and renaming
-    required_columns : Iterable[str]
-        Columns that must be present
-    optional_columns : Iterable[str], optional
-        Columns that are optional but semantically meaningful
-    optional_policy : str, default "ignore"
-        Policy for handling missing optional columns:
-        one of {"ignore", "warn", "error"}
-
-    Raises
-    ------
-    SchemaValidationError
-        If required columns are missing, or optional columns
-        are missing with policy="error"
     """
 
     available = set(columns)
     required = set(required_columns)
 
-    # --- Required column enforcement ---
     missing_required = required - available
     if missing_required:
         raise SchemaValidationError(
@@ -210,7 +177,6 @@ def validate_required_columns(
 
     logger.debug("All required columns are present.")
 
-    # --- Optional column policy enforcement ---
     allowed_policies = {"ignore", "warn", "error"}
 
     if optional_policy not in allowed_policies:
@@ -218,15 +184,20 @@ def validate_required_columns(
             f"Invalid optional_policy '{optional_policy}'. "
             f"Allowed values are: {sorted(allowed_policies)}"
         )
-    if optional_columns:
+
+    if optional_columns is not None:
+
         optional = set(optional_columns)
         missing_optional = optional - available
 
         if missing_optional:
+
             if optional_policy == "error":
                 raise SchemaValidationError(
-                    f"Missing optional columns (policy=error): {sorted(missing_optional)}"
+                    f"Missing optional columns (policy=error): "
+                    f"{sorted(missing_optional)}"
                 )
+
             elif optional_policy == "warn":
                 logger.warning(
                     "Missing optional columns (policy=warn): %s",

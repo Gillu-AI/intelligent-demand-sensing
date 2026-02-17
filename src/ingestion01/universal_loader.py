@@ -1,5 +1,5 @@
+# src/ingestion01/universal_loader.py
 """
-universal_loader.py
 ===================
 
 Central orchestration layer for dataset ingestion in the IDS project.
@@ -123,7 +123,25 @@ def load_all_datasets(
         If demand anchor dataset is not loaded successfully
     """
 
+    if "ingestion" not in config:
+        raise ValueError("Missing 'ingestion' section in configuration.")
+
     ingestion_cfg = config["ingestion"]
+
+    if "datasets" not in ingestion_cfg:
+        raise ValueError(
+            "Missing 'datasets' section under 'ingestion' in configuration."
+        )
+    if not isinstance(paths_cfg, dict):
+        raise ValueError("paths_cfg must be a dictionary.")
+
+    if "data" not in paths_cfg:
+        raise ValueError("Missing 'data' section in paths configuration.")
+
+    if "raw" not in paths_cfg["data"]:
+        raise ValueError("Missing 'data.raw' in paths configuration.")
+
+    
     datasets_cfg = ingestion_cfg["datasets"]
     schema_cfg = config.get("data_schema", {})
 
@@ -136,6 +154,10 @@ def load_all_datasets(
     if not isinstance(demand_source, str):
         raise ValueError(
             "ingestion.demand_source must be a string identifying a dataset name."
+        )
+    if demand_source not in datasets_cfg:
+        raise ValueError(
+            f"demand_source '{demand_source}' is not defined under ingestion.datasets."
         )
 
     results: Dict[str, Any] = {}
@@ -177,6 +199,12 @@ def load_all_datasets(
             # Schema enforcement (GLOBAL, FROZEN)
             # -------------------------------------------------
             if schema_cfg:
+                dataset_schema_cfg = schema_cfg.get(dataset_name)
+
+                if not isinstance(dataset_schema_cfg, dict):
+                    raise ValueError(
+                        f"No schema configuration defined for dataset '{dataset_name}'"
+                    )
 
                 # Multi-sheet case (Excel)
                 if isinstance(data, dict):
@@ -184,7 +212,7 @@ def load_all_datasets(
                     for key, df in data.items():
                         processed[key] = _apply_schema(
                             df=df,
-                            schema_cfg=schema_cfg,
+                            schema_cfg=dataset_schema_cfg,
                             dataset_name=f"{dataset_name}.{key}",
                         )
                     data = processed
@@ -193,7 +221,7 @@ def load_all_datasets(
                 else:
                     data = _apply_schema(
                         df=data,
-                        schema_cfg=schema_cfg,
+                        schema_cfg=dataset_schema_cfg,
                         dataset_name=dataset_name,
                     )
 
@@ -264,7 +292,8 @@ def _apply_schema(
     logger.info(f"Applying schema to dataset '{dataset_name}'")
 
     # 1. Normalize column names
-    df.columns = normalize_column_names(df.columns)
+    if schema_cfg.get("normalize_columns", True):
+         df.columns = normalize_column_names(df.columns)
 
     # 2. Apply rename map
     rename_map = schema_cfg.get("rename_map", {})

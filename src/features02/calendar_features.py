@@ -1,3 +1,5 @@
+# src/features02/calendar_features.py
+
 from typing import Dict
 import pandas as pd
 
@@ -46,11 +48,15 @@ def merge_calendar_features(
     df = df.copy()
     calendar_df = calendar_df.copy()
 
-    date_col = config["date_col"]
-    calendar_date_col = config["calendar_date_col"]
-    holiday_col = config["holiday_col"]
-    festival_col = config["festival_col"]
-    festival_name_col = config["festival_name_col"]
+    sales_schema = config["data_schema"]["sales"]
+    calendar_schema = config["data_schema"]["calendar"]
+
+    date_col = sales_schema["date_column"]
+    calendar_date_col = calendar_schema["date_column"]
+    holiday_col = calendar_schema["holiday_column"]
+    festival_col = calendar_schema["festival_column"]
+    festival_name_col = calendar_schema["festival_name_column"]
+
 
     if date_col not in df.columns:
         raise ValueError(f"{date_col} not found in main dataframe")
@@ -79,8 +85,8 @@ def merge_calendar_features(
         how="left"
     )
 
-    df[holiday_col] = df[holiday_col].fillna(False)
-    df[festival_col] = df[festival_col].fillna(False)
+    df[holiday_col] = df[holiday_col].fillna(False).astype(int)
+    df[festival_col] = df[festival_col].fillna(False).astype(int)
 
     return df
 
@@ -128,10 +134,16 @@ def merge_promo_features(
     df = df.copy()
     promo_df = promo_df.copy()
 
-    date_col = config["date_col"]
-    promo_date_col = config["promo_date_col"]
-    promo_flag_col = config["promo_flag_col"]
-    discount_col = config["discount_col"]
+    sales_schema = config["data_schema"]["sales"]
+    promo_schema = config["data_schema"].get("promotions", {})
+    if not promo_schema:
+        raise ValueError("Missing 'data_schema.promotions' configuration.")
+
+    date_col = sales_schema["date_column"]
+    promo_date_col = promo_schema["date_column"]
+    promo_flag_col = promo_schema["promo_flag_column"]
+    discount_col = promo_schema["discount_column"]
+
 
     if date_col not in df.columns:
         raise ValueError(f"{date_col} not found in main dataframe")
@@ -155,7 +167,7 @@ def merge_promo_features(
         how="left"
     )
 
-    df[promo_flag_col] = df[promo_flag_col].fillna(False)
+    df[promo_flag_col] = df[promo_flag_col].fillna(False).astype(int)
     df[discount_col] = df[discount_col].fillna(0.0)
 
     return df

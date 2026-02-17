@@ -23,6 +23,7 @@ Design Principles:
 """
 
 import os
+from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Dict
@@ -49,6 +50,14 @@ def plot_forecast(forecast_df: pd.DataFrame, config: Dict, logger) -> None:
         Project logger.
     """
 
+    # ------------------------------------------------------
+    # Visualization Toggle Validation
+    # ------------------------------------------------------
+
+    if not config.get("visualization", {}).get("enabled", False):
+        logger.info("Visualization disabled via config. Skipping forecast plot.")
+        return
+
     validate_dataframe_not_empty(forecast_df, "forecast_df")
 
     date_col = config["data_schema"]["sales"]["date_column"]
@@ -60,10 +69,13 @@ def plot_forecast(forecast_df: pd.DataFrame, config: Dict, logger) -> None:
     if target_col not in forecast_df.columns:
         raise ValueError(f"{target_col} not found in forecast dataframe.")
 
+    forecast_df = forecast_df.copy()
     forecast_df[date_col] = pd.to_datetime(forecast_df[date_col])
 
     output_dir = config["paths"]["output"]["plots"]
     ensure_directory(output_dir)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     plt.figure(figsize=(14, 7))
 
@@ -127,7 +139,11 @@ def plot_forecast(forecast_df: pd.DataFrame, config: Dict, logger) -> None:
     plt.legend()
     plt.tight_layout()
 
-    output_path = os.path.join(output_dir, "forecast_visualization.png")
+    output_path = os.path.join(
+        output_dir,
+        f"forecast_visualization_{timestamp}.png"
+    )
+
     plt.savefig(output_path)
     plt.close()
 

@@ -1,11 +1,30 @@
 # src/modeling03/tree_models.py
 
 from typing import Dict
-import pandas as pd
 
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
+
+
+def _validate_modeling_config(config: Dict, model_key: str) -> None:
+    """
+    Validate required config structure for tree models.
+    """
+    if not isinstance(config, dict):
+        raise ValueError("config must be a dictionary.")
+
+    if "seeds" not in config or "global_seed" not in config["seeds"]:
+        raise ValueError("Missing 'seeds.global_seed' in configuration.")
+
+    if (
+        "modeling" not in config
+        or "models" not in config["modeling"]
+        or model_key not in config["modeling"]["models"]
+    ):
+        raise ValueError(
+            f"Missing 'modeling.models.{model_key}' configuration."
+        )
 
 
 def get_random_forest_model(config: Dict) -> RandomForestRegressor:
@@ -28,13 +47,15 @@ def get_random_forest_model(config: Dict) -> RandomForestRegressor:
     - No hyperparameter tuning applied here.
     """
 
-    params = config["modeling"]["models"]["random_forest"].get("params", {})
+    _validate_modeling_config(config, "random_forest")
 
-    return RandomForestRegressor(
-        **params,
-        random_state=config["seeds"]["global_seed"],
-        n_jobs=-1
-    )
+    params = config["modeling"]["models"]["random_forest"].get("params", {}).copy()
+
+    # Enforce seed & parallelism safely
+    params["random_state"] = config["seeds"]["global_seed"]
+    params["n_jobs"] = -1
+
+    return RandomForestRegressor(**params)
 
 
 def get_xgboost_model(config: Dict) -> XGBRegressor:
@@ -57,14 +78,15 @@ def get_xgboost_model(config: Dict) -> XGBRegressor:
     - No hyperparameter tuning applied here.
     """
 
-    params = config["modeling"]["models"]["xgboost"].get("params", {})
+    _validate_modeling_config(config, "xgboost")
 
-    return XGBRegressor(
-        **params,
-        random_state=config["seeds"]["global_seed"],
-        n_jobs=-1,
-        verbosity=0
-    )
+    params = config["modeling"]["models"]["xgboost"].get("params", {}).copy()
+
+    params["random_state"] = config["seeds"]["global_seed"]
+    params["n_jobs"] = -1
+    params["verbosity"] = 0
+
+    return XGBRegressor(**params)
 
 
 def get_lightgbm_model(config: Dict) -> LGBMRegressor:
@@ -87,10 +109,11 @@ def get_lightgbm_model(config: Dict) -> LGBMRegressor:
     - No hyperparameter tuning applied here.
     """
 
-    params = config["modeling"]["models"]["lightgbm"].get("params", {})
+    _validate_modeling_config(config, "lightgbm")
 
-    return LGBMRegressor(
-        **params,
-        random_state=config["seeds"]["global_seed"],
-        n_jobs=-1
-    )
+    params = config["modeling"]["models"]["lightgbm"].get("params", {}).copy()
+
+    params["random_state"] = config["seeds"]["global_seed"]
+    params["n_jobs"] = -1
+
+    return LGBMRegressor(**params)

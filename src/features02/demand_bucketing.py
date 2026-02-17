@@ -39,6 +39,15 @@ def add_demand_bucketing(
     - Intended to be executed AFTER lag features.
     """
 
+    # --------------------------------------------------
+    # Defensive config validation
+    # --------------------------------------------------
+    if "data_schema" not in config or "sales" not in config["data_schema"]:
+        raise ValueError("Missing 'data_schema.sales' configuration.")
+
+    if "features" not in config or "demand_bucketing" not in config["features"]:
+        raise ValueError("Missing 'features.demand_bucketing' configuration.")
+
     df = df.copy()
 
     target_col = config["data_schema"]["sales"]["target_column"]
@@ -51,7 +60,7 @@ def add_demand_bucketing(
     if method != "quantile":
         raise ValueError(f"Unsupported bucketing method: {method}")
 
-    if len(labels) < 2:
+    if not isinstance(labels, list) or len(labels) < 2:
         raise ValueError("At least two labels required for bucketing.")
 
     df["demand_class"] = pd.qcut(

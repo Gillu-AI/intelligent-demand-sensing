@@ -35,7 +35,7 @@ def validate_datetime_column(df: pd.DataFrame, date_col: str) -> None:
 
 def add_time_features(
     df: pd.DataFrame,
-    date_col: str = "date",
+    date_col: str,
     features: List[str] | None = None,
 ) -> pd.DataFrame:
     """
@@ -45,7 +45,7 @@ def add_time_features(
     ----------
     df : pd.DataFrame
         Input dataframe (assumed schema-validated).
-    date_col : str, default "date"
+    date_col : str
         Datetime column to derive features from.
     features : list[str] or None
         Subset of time features to compute. If None, all are computed.
@@ -60,14 +60,15 @@ def add_time_features(
     df = df.copy()
 
     all_features = {
-        "day_of_week": df[date_col].dt.weekday,
-        "is_weekend": df[date_col].dt.weekday >= 5,
-        "week_of_year": df[date_col].dt.isocalendar().week.astype(int),
-        "month": df[date_col].dt.month,
-        "quarter": df[date_col].dt.quarter,
-        "is_month_start": df[date_col].dt.is_month_start,
-        "is_month_end": df[date_col].dt.is_month_end,
+    "day_of_week": df[date_col].dt.weekday,
+    "is_weekend": (df[date_col].dt.weekday >= 5).astype(int),
+    "week_of_year": df[date_col].dt.isocalendar().week.astype(int),
+    "month": df[date_col].dt.month,
+    "quarter": df[date_col].dt.quarter,
+    "is_month_start": df[date_col].dt.is_month_start.astype(int),
+    "is_month_end": df[date_col].dt.is_month_end.astype(int),
     }
+
 
     selected_features = features or list(all_features.keys())
 

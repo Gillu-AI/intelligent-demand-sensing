@@ -20,6 +20,7 @@ Design Principles:
 """
 
 import os
+from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Dict
@@ -50,13 +51,26 @@ def plot_model_comparison(
         Logger instance.
     """
 
+    # ------------------------------------------------------
+    # Visualization Toggle
+    # ------------------------------------------------------
+
+    if not config.get("visualization", {}).get("enabled", False):
+        logger.info("Visualization disabled via config. Skipping model comparison plot.")
+        return
+
     validate_dataframe_not_empty(metrics_df, "metrics_df")
 
     if "MAPE (%)" not in metrics_df.columns:
         raise ValueError("MAPE (%) column missing in metrics dataframe.")
 
+    if "paths" not in config or "output" not in config["paths"]:
+        raise ValueError("Missing paths.output configuration.")
+
     output_dir = config["paths"]["output"]["plots"]
     ensure_directory(output_dir)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     plt.figure(figsize=(12, 6))
 
@@ -74,7 +88,7 @@ def plot_model_comparison(
 
     output_path = os.path.join(
         output_dir,
-        "model_comparison.png"
+        f"model_comparison_{timestamp}.png"
     )
 
     plt.savefig(output_path)
@@ -109,6 +123,14 @@ def plot_feature_importance(
         Number of top features to plot.
     """
 
+    # ------------------------------------------------------
+    # Visualization Toggle
+    # ------------------------------------------------------
+
+    if not config.get("visualization", {}).get("enabled", False):
+        logger.info("Visualization disabled via config. Skipping feature importance plot.")
+        return
+
     validate_dataframe_not_empty(
         feature_importance_df,
         "feature_importance_df"
@@ -121,6 +143,8 @@ def plot_feature_importance(
 
     output_dir = config["paths"]["output"]["plots"]
     ensure_directory(output_dir)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     top_features = (
         feature_importance_df
@@ -142,7 +166,7 @@ def plot_feature_importance(
 
     output_path = os.path.join(
         output_dir,
-        "feature_importance.png"
+        f"feature_importance_{timestamp}.png"
     )
 
     plt.savefig(output_path)

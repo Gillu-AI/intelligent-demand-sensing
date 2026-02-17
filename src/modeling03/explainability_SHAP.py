@@ -1,3 +1,5 @@
+# src/modeling03/explainablity_SHAP.py
+
 """
 SHAP Explainability Module
 ===========================
@@ -41,7 +43,11 @@ import shap
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import logging
 from typing import Any, Dict
+
+
+logger = logging.getLogger(__name__)
 
 
 # ==========================================================
@@ -58,8 +64,6 @@ def _detect_model_type(model: Any) -> str:
         "tree" | "linear" | "unsupported"
     """
 
-    model_name = model.__class__.__name__.lower()
-
     # Tree models
     if hasattr(model, "feature_importances_"):
         return "tree"
@@ -74,7 +78,8 @@ def _detect_model_type(model: Any) -> str:
 
 def _get_sample_data(
     X: pd.DataFrame,
-    sample_size: int
+    sample_size: int,
+    seed: int
 ) -> pd.DataFrame:
     """
     Subsample dataset for SHAP computation.
@@ -96,10 +101,16 @@ def _get_sample_data(
     pd.DataFrame
     """
 
+    if not isinstance(X, pd.DataFrame):
+        raise ValueError("SHAP input must be a pandas DataFrame.")
+
+    if X.empty:
+        raise ValueError("Cannot compute SHAP on empty dataset.")
+
     if len(X) <= sample_size:
         return X
 
-    return X.sample(sample_size, random_state=42)
+    return X.sample(sample_size, random_state=seed)
 
 
 # ==========================================================
@@ -143,22 +154,26 @@ def generate_shap_explainability(
     - Fails gracefully if unsupported
     """
 
-    if not config.get("explainability", {}).get("enabled", False):
+    explain_cfg = config.get("explainability", {})
+
+    if not explain_cfg.get("enabled", False):
+        logger.info("SHAP explainability disabled via config.")
         return
 
-    sample_size = config.get("explainability", {}).get("sample_size", 500)
+    sample_size = explain_cfg.get("sample_size", 500)
+    seed = config["seeds"]["global_seed"]
 
     model_type = _detect_model_type(model)
 
     if model_type == "unsupported":
-        print(f"SHAP skipped: Model '{model_name}' not supported.")
+        logger.info(f"SHAP skipped: Model '{model_name}' not supported.")
         return
 
     try:
 
         # Subsample for performance
-        X_train_sample = _get_sample_data(X_train, sample_size)
-        X_test_sample = _get_sample_data(X_test, sample_size)
+        X_train_sample = _get_sample_data(X_train, sample_size, seed)
+        X_test_sample = _get_sample_data(X_test, sample_size, seed)
 
         # Select explainer
         if model_type == "tree":
@@ -167,17 +182,19 @@ def generate_shap_explainability(
         elif model_type == "linear":
             explainer = shap.LinearExplainer(
                 model,
-                X_train_sample,
-                feature_dependence="independent"
+                X_train_sample
             )
 
         else:
-            print(f"SHAP skipped: No valid explainer for '{model_name}'.")
+            logger.info(f"SHAP skipped: No valid explainer for '{model_name}'.")
             return
 
         shap_values = explainer(X_test_sample)
 
         # Ensure output directory exists
+        if not isinstance(output_dir, str) or not output_dir:
+            raise ValueError("Invalid output directory for SHAP plots.")
+
         os.makedirs(output_dir, exist_ok=True)
 
         # Generate summary plot
@@ -196,8 +213,10 @@ def generate_shap_explainability(
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close()
 
-        print(f"SHAP summary saved to: {plot_path}")
+        logger.info(f"SHAP summary saved to: {plot_path}")
 
     except Exception as e:
         # Fail-safe behavior: never crash pipeline due to SHAP
-        print(f"SHAP generation failed for '{model_name}': {str(e)}")
+        logger.exception(
+            f"SHAP generation failed for '{model_name}': {str(e)}"
+        )

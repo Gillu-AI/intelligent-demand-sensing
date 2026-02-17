@@ -55,6 +55,21 @@ def prepare_model_data(
         Target vector.
     """
 
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError("df must be a pandas DataFrame.")
+
+    if not isinstance(config, dict):
+        raise ValueError("config must be a dictionary.")
+
+    if (
+        "data_schema" not in config
+        or "sales" not in config["data_schema"]
+        or "target_column" not in config["data_schema"]["sales"]
+    ):
+        raise ValueError(
+            "Missing 'data_schema.sales.target_column' in configuration."
+        )
+
     target_col = config["data_schema"]["sales"]["target_column"]
 
     if target_col not in df.columns:

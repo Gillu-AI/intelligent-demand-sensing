@@ -1,3 +1,5 @@
+# src/ingestion01/api_ingestion.py
+
 """
 API ingestion module for the IDS project.
 
@@ -112,6 +114,10 @@ def ingest(
     method = api_cfg["method"].upper()
     url = api_cfg["url"]
     timeout = api_cfg["timeout_seconds"]
+    if not isinstance(timeout, (int, float)):
+        raise ValueError(
+            f"[API INGESTION] 'timeout_seconds' must be numeric for '{dataset_name}'"
+        )
 
     if not isinstance(url, str):
         raise ValueError(
@@ -122,9 +128,24 @@ def ingest(
     # Resolve headers and params
     # --------------------------------------------------
     headers = {}
-    for k, v in api_cfg.get("headers", {}).items():
-        headers[k] = _resolve_env_vars(v) if isinstance(v, str) else v
+    raw_headers = api_cfg.get("headers", {})
 
+    for key, value in raw_headers.items():
+
+        # Special handling for authorization_env pattern
+        if key == "authorization_env":
+            if value not in os.environ:
+                raise EnvironmentError(
+                    f"[API INGESTION] Environment variable '{value}' not set"
+                )
+            headers["Authorization"] = f"Bearer {os.environ[value]}"
+            continue
+
+        # Standard header resolution
+        if isinstance(value, str):
+            headers[key] = _resolve_env_vars(value)
+        else:
+            headers[key] = value
     params = api_cfg.get("params", {})
 
     logger.info(
@@ -138,6 +159,15 @@ def ingest(
     # --------------------------------------------------
     pagination_cfg = api_cfg.get("pagination", {})
     pagination_enabled = pagination_cfg.get("enabled", False)
+    if pagination_enabled:
+        required_pagination_keys = {"page_param", "size_param", "page_size"}
+        missing_keys = required_pagination_keys - pagination_cfg.keys()
+
+        if missing_keys:
+            raise ValueError(
+                f"[API INGESTION] Missing pagination keys for '{dataset_name}': "
+                f"{sorted(missing_keys)}"
+            )
 
     page = 1
     while True:
@@ -156,7 +186,12 @@ def ingest(
         )
 
         response.raise_for_status()
-        payload = response.json()
+        try:
+            payload = response.json()
+        except ValueError:
+            raise ValueError(
+                f"[API INGESTION] Non-JSON response received for '{dataset_name}'"
+            )
 
         if isinstance(payload, dict):
             payload = payload.get("data")

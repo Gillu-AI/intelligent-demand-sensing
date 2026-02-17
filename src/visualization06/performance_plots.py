@@ -22,6 +22,7 @@ Design Principles:
 """
 
 import os
+from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Dict
@@ -50,13 +51,26 @@ def plot_mape_comparison(metrics_df: pd.DataFrame,
         Project logger.
     """
 
+    # ------------------------------------------------------
+    # Visualization Toggle
+    # ------------------------------------------------------
+
+    if not config.get("visualization", {}).get("enabled", False):
+        logger.info("Visualization disabled via config. Skipping MAPE plot.")
+        return
+
     validate_dataframe_not_empty(metrics_df, "metrics_df")
 
     if "MAPE (%)" not in metrics_df.columns:
         raise ValueError("MAPE (%) column not found in metrics dataframe.")
 
+    if "paths" not in config or "output" not in config["paths"]:
+        raise ValueError("Missing paths.output configuration.")
+
     output_dir = config["paths"]["output"]["plots"]
     ensure_directory(output_dir)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     plt.figure(figsize=(10, 6))
 
@@ -68,7 +82,11 @@ def plot_mape_comparison(metrics_df: pd.DataFrame,
     plt.ylabel("MAPE (%)")
     plt.tight_layout()
 
-    output_path = os.path.join(output_dir, "performance_mape.png")
+    output_path = os.path.join(
+        output_dir,
+        f"performance_mape_{timestamp}.png"
+    )
+
     plt.savefig(output_path)
     plt.close()
 
@@ -92,16 +110,26 @@ def plot_error_comparison(metrics_df: pd.DataFrame,
     logger : logging.Logger
     """
 
+    # ------------------------------------------------------
+    # Visualization Toggle
+    # ------------------------------------------------------
+
+    if not config.get("visualization", {}).get("enabled", False):
+        logger.info("Visualization disabled via config. Skipping error comparison plot.")
+        return
+
     validate_dataframe_not_empty(metrics_df, "metrics_df")
 
     required_cols = ["MAE", "RMSE"]
     for col in required_cols:
         if col not in metrics_df.columns:
-            logger.warning(f"{col} not found in metrics dataframe.")
+            logger.warning(f"{col} not found in metrics dataframe. Skipping error comparison.")
             return
 
     output_dir = config["paths"]["output"]["plots"]
     ensure_directory(output_dir)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     plt.figure(figsize=(12, 6))
 
@@ -110,7 +138,11 @@ def plot_error_comparison(metrics_df: pd.DataFrame,
     plt.ylabel("Error")
     plt.tight_layout()
 
-    output_path = os.path.join(output_dir, "performance_error.png")
+    output_path = os.path.join(
+        output_dir,
+        f"performance_error_{timestamp}.png"
+    )
+
     plt.savefig(output_path)
     plt.close()
 

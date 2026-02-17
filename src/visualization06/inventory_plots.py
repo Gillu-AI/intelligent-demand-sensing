@@ -23,6 +23,7 @@ Design Principles:
 """
 
 import os
+from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Dict
@@ -56,6 +57,14 @@ def plot_inventory_plan(
         Logger instance.
     """
 
+    # ------------------------------------------------------
+    # Visualization Toggle Validation
+    # ------------------------------------------------------
+
+    if not config.get("visualization", {}).get("enabled", False):
+        logger.info("Visualization disabled via config. Skipping inventory plot.")
+        return
+
     validate_dataframe_not_empty(forecast_df, "forecast_df")
 
     date_col = config["data_schema"]["sales"]["date_column"]
@@ -77,10 +86,13 @@ def plot_inventory_plan(
         if key not in inventory_result:
             raise ValueError(f"{key} missing in inventory_result.")
 
+    forecast_df = forecast_df.copy()
     forecast_df[date_col] = pd.to_datetime(forecast_df[date_col])
 
     output_dir = config["paths"]["output"]["plots"]
     ensure_directory(output_dir)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     plt.figure(figsize=(14, 7))
 
@@ -128,7 +140,7 @@ def plot_inventory_plan(
 
     output_path = os.path.join(
         output_dir,
-        "inventory_visualization.png"
+        f"inventory_visualization_{timestamp}.png"
     )
 
     plt.savefig(output_path)

@@ -9,17 +9,19 @@ final model-ready dataset.
 """
 
 import os
+from datetime import datetime
 import pandas as pd
-from typing import Dict
 
 from utils.config_loader import load_config
 from utils.logger import get_logger
 from utils.helpers import ensure_directory
+from utils.helpers import validate_dataframe_not_empty
+
 from features02.time_features import add_time_features
 from features02.lag_features import add_lag_features, add_rolling_features
 from features02.calendar_features import merge_calendar_features
-from features02.aggregation_features import add_same_weekday_rolling
-from features02.demand_bucketing import add_demand_buckets
+from features02.aggregation_features import add_avg_sales_same_weekday
+from features02.demand_bucketing import add_demand_bucketing
 
 
 # ==========================================================
@@ -37,126 +39,172 @@ def run_features():
     logger.info("Starting feature engineering pipeline.")
 
     # --------------------------------------------------
-    # 1. Load Cleaned Dataset
+    # Validate Required Config Sections
     # --------------------------------------------------
+
+    required_sections = ["paths", "data_schema", "features"]
+    for section in required_sections:
+        if section not in config:
+            raise ValueError(f"Missing '{section}' configuration.")
+
     processed_path = config["paths"]["data"]["processed"]
 
-    cleaned_file = os.path.join(processed_path, "cleaned_sales.parquet")
+    if not os.path.exists(processed_path):
+        raise FileNotFoundError("Processed data directory not found.")
 
-    if not os.path.exists(cleaned_file):
+    # --------------------------------------------------
+    # 1. Load Latest Cleaned Dataset (Version-Aware)
+    # --------------------------------------------------
+
+    cleaned_files = [
+        f for f in os.listdir(processed_path)
+        if f.startswith("cleaned_sales_") and f.endswith(".parquet")
+    ]
+
+    if not cleaned_files:
         raise FileNotFoundError(
-            "cleaned_sales.parquet not found. "
+            "No versioned cleaned_sales_*.parquet found. "
             "Run ingestion pipeline first."
         )
 
+    cleaned_files.sort(reverse=True)
+    cleaned_file = os.path.join(processed_path, cleaned_files[0])
+
     df = pd.read_parquet(cleaned_file)
 
+    validate_dataframe_not_empty(df, "cleaned_sales")
+
+    logger.info(f"Loaded cleaned dataset: {cleaned_files[0]}")
+    logger.info(f"Dataset shape: {df.shape}")
+
     date_col = config["data_schema"]["sales"]["date_column"]
-    target_col = config["data_schema"]["sales"]["target_column"]
 
-    logger.info(f"Loaded cleaned dataset with shape: {df.shape}")
-
-    # --- Industrial Guard: enforce datetime & sorting ---
-    df[date_col] = pd.to_datetime(df[date_col])
+    df[date_col] = pd.to_datetime(df[date_col], errors="raise")
     df = df.sort_values(by=date_col).reset_index(drop=True)
 
     # --------------------------------------------------
     # 2. Time Features
     # --------------------------------------------------
+
     if config["features"]["time_features"]["enabled"]:
+
+        time_feature_list = config["features"]["time_features"].get(
+            "features", []
+        )
+
         logger.info("Applying time features.")
-        df = add_time_features(df, config)
+        df = add_time_features(
+            df=df,
+            date_col=date_col,
+            features=time_feature_list
+        )
 
     # --------------------------------------------------
     # 3. Lag Features
     # --------------------------------------------------
+
     if config["features"]["lag_features"]["enabled"]:
-        lags = config["features"]["lag_features"]["lags"]
-        logger.info(f"Applying lag features: {lags}")
-        df = add_lag_features(df, target_col, lags, date_col)
+
+        logger.info("Applying lag features.")
+        df = add_lag_features(df, config)
 
     # --------------------------------------------------
     # 4. Rolling Features
     # --------------------------------------------------
+
     if config["features"]["rolling_features"]["enabled"]:
-        windows = config["features"]["rolling_features"]["windows"]
-        logger.info(f"Applying rolling features: {windows}")
-        df = add_rolling_features(df, target_col, windows, date_col)
+
+        logger.info("Applying rolling features.")
+        df = add_rolling_features(df, config)
 
     # --------------------------------------------------
     # 5. Calendar Merge
     # --------------------------------------------------
+
     if config["features"]["calendar_features"]["enabled"]:
+
+        calendar_dataset_cfg = config["ingestion"]["datasets"].get("calendar")
+
+        if not calendar_dataset_cfg:
+            raise ValueError("Calendar dataset not configured under ingestion.datasets.")
 
         calendar_path = os.path.join(
             config["paths"]["data"]["raw"],
-            config["ingestion"]["datasets"]["calendar"]["file"]
+            calendar_dataset_cfg["file"]
         )
 
-        if os.path.exists(calendar_path):
+        if not os.path.exists(calendar_path):
+            raise FileNotFoundError("Configured calendar file not found.")
 
-            logger.info("Merging calendar features.")
+        calendar_df = pd.read_csv(calendar_path)
 
-            calendar_df = pd.read_csv(calendar_path)
-
+        calendar_df[
+            config["data_schema"]["calendar"]["date_column"]
+        ] = pd.to_datetime(
             calendar_df[
                 config["data_schema"]["calendar"]["date_column"]
-            ] = pd.to_datetime(
-                calendar_df[
-                    config["data_schema"]["calendar"]["date_column"]
-                ]
-            )
+            ],
+            errors="raise"
+        )
 
-            calendar_config = {
-                "date_col": date_col,
-                "calendar_date_col": config["data_schema"]["calendar"]["date_column"],
-                "holiday_col": config["data_schema"]["calendar"]["holiday_column"],
-                "festival_col": config["data_schema"]["calendar"]["festival_column"],
-                "festival_name_col": config["data_schema"]["calendar"]["festival_name_column"],
-            }
-
-            df = merge_calendar_features(df, calendar_df, calendar_config)
+        logger.info("Merging calendar features.")
+        df = merge_calendar_features(df, calendar_df, config)
 
     # --------------------------------------------------
     # 6. Aggregation Features
     # --------------------------------------------------
+
     if config["features"]["aggregation_features"]["enabled"]:
-        window = config["features"]["aggregation_features"]["same_weekday_window"]
-        logger.info(f"Applying same weekday aggregation with window: {window}")
-        df = add_same_weekday_rolling(df, target_col, date_col, window)
+
+        logger.info("Applying same weekday aggregation.")
+        df = add_avg_sales_same_weekday(df, config)
 
     # --------------------------------------------------
     # 7. Demand Bucketing
     # --------------------------------------------------
+
     if config["features"].get("demand_bucketing", {}).get("method"):
+
         logger.info("Applying demand bucketing.")
-        df = add_demand_buckets(df, config)
+        df = add_demand_bucketing(df, config)
 
     # --------------------------------------------------
     # 8. Drop Insufficient Lag History
     # --------------------------------------------------
+
     if config["features"]["lag_features"]["enabled"]:
-        max_lag = max(config["features"]["lag_features"]["lags"])
-        logger.info(f"Dropping first {max_lag} rows due to lag history.")
-        df = df.iloc[max_lag:].reset_index(drop=True)
+
+        lags = config["features"]["lag_features"]["lags"]
+
+        if lags:
+            max_lag = max(lags)
+            logger.info(f"Dropping first {max_lag} rows due to lag history.")
+            df = df.iloc[max_lag:].reset_index(drop=True)
 
     # --------------------------------------------------
-    # 9. Final Validation (Fail Fast)
+    # 9. Final Validation
     # --------------------------------------------------
+
     if df.isna().sum().sum() > 0:
         raise ValueError(
-            "model_ready.parquet contains missing values. "
+            "model_ready dataset contains missing values. "
             "Check feature generation pipeline."
         )
 
     logger.info("Feature validation passed. No missing values detected.")
 
     # --------------------------------------------------
-    # 10. Save Model-Ready Dataset
+    # 10. Save Model-Ready Dataset (Versioned)
     # --------------------------------------------------
+
     ensure_directory(processed_path)
 
-    output_file = os.path.join(processed_path, "model_ready.parquet")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    output_file = os.path.join(
+        processed_path,
+        f"model_ready_{timestamp}.parquet"
+    )
 
     df.to_parquet(output_file, index=False)
 

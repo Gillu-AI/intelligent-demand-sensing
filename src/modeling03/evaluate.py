@@ -26,7 +26,16 @@ def calculate_mape(y_true, y_pred) -> float:
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
 
+    if len(y_true) != len(y_pred):
+        raise ValueError("y_true and y_pred must have the same length.")
+
     non_zero_mask = y_true != 0
+
+    if not np.any(non_zero_mask):
+        raise ValueError(
+            "MAPE cannot be computed because all true values are zero."
+        )
+
     y_true = y_true[non_zero_mask]
     y_pred = y_pred[non_zero_mask]
 
@@ -49,6 +58,9 @@ def evaluate_regression_model(y_true, y_pred) -> Dict[str, float]:
     Dict[str, float]
         Dictionary containing MAE, RMSE, MAPE, R2.
     """
+
+    if len(y_true) != len(y_pred):
+        raise ValueError("y_true and y_pred must have the same length.")
 
     mae = mean_absolute_error(y_true, y_pred)
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
@@ -82,6 +94,16 @@ def build_metrics_dataframe(results: Dict[str, Dict[str, float]]) -> pd.DataFram
         Tabular comparison of model metrics.
     """
 
+    if not results:
+        raise ValueError("Results dictionary is empty.")
+
     df = pd.DataFrame(results).T
+
+    if "MAPE (%)" not in df.columns:
+        raise ValueError(
+            "'MAPE (%)' column not found in results. Cannot sort models."
+        )
+
     df = df.sort_values(by="MAPE (%)")
+
     return df

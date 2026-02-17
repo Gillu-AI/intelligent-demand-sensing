@@ -27,6 +27,16 @@ class ProphetRegressor:
             Full configuration dictionary.
         """
 
+        if "data_schema" not in config or "sales" not in config["data_schema"]:
+            raise ValueError("Missing 'data_schema.sales' configuration.")
+
+        if (
+            "modeling" not in config
+            or "models" not in config["modeling"]
+            or "prophet" not in config["modeling"]["models"]
+        ):
+            raise ValueError("Missing 'modeling.models.prophet' configuration.")
+
         self.date_col = config["data_schema"]["sales"]["date_column"]
         self.target_col = config["data_schema"]["sales"]["target_column"]
 
@@ -34,7 +44,7 @@ class ProphetRegressor:
 
         self.model = Prophet(
             yearly_seasonality=prophet_config.get("yearly_seasonality", True),
-            weekly_seasonality=prophet_config.get("weekly_seasonality", True)
+            weekly_seasonality=prophet_config.get("weekly_seasonality", True),
         )
 
     def fit(self, df: pd.DataFrame):
@@ -47,7 +57,19 @@ class ProphetRegressor:
             DataFrame containing date and target columns.
         """
 
+        if self.date_col not in df.columns:
+            raise ValueError(f"Column '{self.date_col}' not found in dataset.")
+
+        if self.target_col not in df.columns:
+            raise ValueError(f"Column '{self.target_col}' not found in dataset.")
+
         prophet_df = df[[self.date_col, self.target_col]].copy()
+
+        if not pd.api.types.is_datetime64_any_dtype(prophet_df[self.date_col]):
+            prophet_df[self.date_col] = pd.to_datetime(
+                prophet_df[self.date_col], errors="raise"
+            )
+
         prophet_df.columns = ["ds", "y"]
 
         self.model.fit(prophet_df)
@@ -69,9 +91,22 @@ class ProphetRegressor:
             Predicted values aligned with input index.
         """
 
+        if self.date_col not in df.columns:
+            raise ValueError(f"Column '{self.date_col}' not found in dataset.")
+
         future_df = df[[self.date_col]].copy()
+
+        if not pd.api.types.is_datetime64_any_dtype(future_df[self.date_col]):
+            future_df[self.date_col] = pd.to_datetime(
+                future_df[self.date_col], errors="raise"
+            )
+
         future_df.columns = ["ds"]
 
         forecast = self.model.predict(future_df)
 
-        return forecast["yhat"].values
+        return pd.Series(
+            forecast["yhat"].values,
+            index=df.index,
+            name="prophet_prediction",
+        )
