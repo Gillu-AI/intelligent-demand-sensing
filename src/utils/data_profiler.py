@@ -23,7 +23,7 @@ This module DOES NOT modify data.
 It only detects and reports.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Any
 import pandas as pd
 
 
@@ -34,20 +34,10 @@ import pandas as pd
 def detect_column_types(df: pd.DataFrame) -> Dict[str, str]:
     """
     Detect high-level column data types.
-
-    Returns:
-    --------
-    Dict[str, str]
-        Mapping of column name to detected type:
-        - "numeric"
-        - "categorical"
-        - "boolean"
-        - "datetime"
-        - "unknown"
     """
 
-    if df is None:
-        raise ValueError("Input DataFrame cannot be None.")
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
 
     type_map = {}
 
@@ -60,7 +50,7 @@ def detect_column_types(df: pd.DataFrame) -> Dict[str, str]:
             type_map[col] = "numeric"
         elif (
             pd.api.types.is_object_dtype(df[col]) or
-            pd.api.types.is_categorical_dtype(df[col])
+            isinstance(df[col].dtype, pd.CategoricalDtype)
         ):
             type_map[col] = "categorical"
         else:
@@ -76,16 +66,10 @@ def detect_column_types(df: pd.DataFrame) -> Dict[str, str]:
 def profile_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     Generate missing value summary.
-
-    Returns:
-    --------
-    DataFrame with:
-        - missing_count
-        - missing_percentage
     """
 
-    if df is None:
-        raise ValueError("Input DataFrame cannot be None.")
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
 
     total_rows = len(df)
 
@@ -95,7 +79,7 @@ def profile_missing_values(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     missing_count = df.isna().sum()
-    missing_percentage = (missing_count / total_rows) * 100
+    missing_percentage = ((missing_count / total_rows) * 100).round(4)
 
     summary = pd.DataFrame({
         "missing_count": missing_count,
@@ -115,15 +99,10 @@ def profile_missing_values(df: pd.DataFrame) -> pd.DataFrame:
 def detect_exact_duplicates(df: pd.DataFrame) -> int:
     """
     Detect exact duplicate rows.
-
-    Returns:
-    --------
-    int
-        Number of duplicate rows.
     """
 
-    if df is None:
-        raise ValueError("Input DataFrame cannot be None.")
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
 
     return int(df.duplicated().sum())
 
@@ -131,23 +110,13 @@ def detect_exact_duplicates(df: pd.DataFrame) -> int:
 def detect_duplicate_by_keys(df: pd.DataFrame, keys: List[str]) -> int:
     """
     Detect duplicates based on specific key columns.
-
-    Parameters:
-    -----------
-    keys : list of column names
-        Candidate primary key columns.
-
-    Returns:
-    --------
-    int
-        Number of duplicate key occurrences.
     """
 
-    if df is None:
-        raise ValueError("Input DataFrame cannot be None.")
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
 
-    if not keys:
-        raise ValueError("Keys list cannot be empty.")
+    if not isinstance(keys, list) or not keys:
+        raise ValueError("Keys must be a non-empty list of column names.")
 
     missing_keys = [k for k in keys if k not in df.columns]
     if missing_keys:
@@ -166,20 +135,10 @@ def detect_duplicate_by_keys(df: pd.DataFrame, keys: List[str]) -> int:
 def suggest_candidate_keys(df: pd.DataFrame) -> List[str]:
     """
     Suggest candidate unique key columns.
-
-    Logic:
-    ------
-    Columns where:
-        number of unique values == number of rows
-
-    WARNING:
-    --------
-    This performs a full uniqueness scan.
-    Business validation required.
     """
 
-    if df is None:
-        raise ValueError("Input DataFrame cannot be None.")
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
 
     candidates = []
     total_rows = len(df)
@@ -201,18 +160,10 @@ def suggest_candidate_keys(df: pd.DataFrame) -> List[str]:
 def profile_cardinality(df: pd.DataFrame) -> pd.DataFrame:
     """
     Analyze unique value counts for each column.
-
-    Useful for:
-    - Detecting high cardinality categorical columns
-    - Detecting potential classification targets
-
-    NOTE:
-    -----
-    Performs full unique value scan.
     """
 
-    if df is None:
-        raise ValueError("Input DataFrame cannot be None.")
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
 
     cardinality = {
         col: df[col].nunique(dropna=True)
@@ -227,3 +178,40 @@ def profile_cardinality(df: pd.DataFrame) -> pd.DataFrame:
         )
         .sort_values(by="unique_values", ascending=False)
     )
+
+
+def profile_dataframe(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Generate consolidated profiling summary for a DataFrame.
+
+    Returns
+    -------
+    Dict[str, Any]
+        {
+            "row_count": int,
+            "column_count": int,
+            "column_types": Dict[str, str],
+            "missing_summary": pd.DataFrame,
+            "duplicate_rows": int,
+            "cardinality": pd.DataFrame,
+            "candidate_keys": List[str]
+        }
+    """
+
+    if df is None:
+        raise ValueError("Input DataFrame cannot be None.")
+
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
+
+    summary = {
+        "row_count": len(df),
+        "column_count": len(df.columns),
+        "column_types": detect_column_types(df),
+        "missing_summary": profile_missing_values(df),
+        "duplicate_rows": detect_exact_duplicates(df),
+        "cardinality": profile_cardinality(df),
+        "candidate_keys": suggest_candidate_keys(df),
+    }
+
+    return summary

@@ -35,7 +35,8 @@ def ensure_directory(path: str) -> None:
     if not isinstance(path, str) or not path.strip():
         raise ValueError("Directory path must be a non-empty string.")
 
-    os.makedirs(path, exist_ok=True)
+    normalized_path = os.path.abspath(path)
+    os.makedirs(normalized_path, exist_ok=True)
 
 
 # ==========================================================
@@ -51,8 +52,8 @@ def build_period_filename(start_date: str, end_date: str, suffix: str) -> str:
         raise ValueError("suffix must be a non-empty string.")
 
     try:
-        start_fmt = pd.to_datetime(start_date).strftime("%b%Y")
-        end_fmt = pd.to_datetime(end_date).strftime("%b%Y")
+        start_fmt = pd.to_datetime(start_date).strftime("%Y%m")
+        end_fmt = pd.to_datetime(end_date).strftime("%Y%m")
     except Exception as e:
         raise ValueError(
             f"Invalid date format provided to build_period_filename: {e}"
@@ -69,7 +70,7 @@ def generate_timestamp(fmt: str = "%Y%m%d_%H%M") -> str:
     if not isinstance(fmt, str) or not fmt.strip():
         raise ValueError("Timestamp format must be a non-empty string.")
 
-    return datetime.now().strftime(fmt)
+    return datetime.utcnow().strftime(fmt)
 
 
 # ==========================================================

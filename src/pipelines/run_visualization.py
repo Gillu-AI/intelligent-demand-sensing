@@ -58,7 +58,7 @@ def run_visualization():
     Then generates visual artifacts.
     """
 
-    config = load_config()
+    config = load_config("config/config.yaml")
     logger = get_logger(config)
 
     logger.info("Starting visualization pipeline.")

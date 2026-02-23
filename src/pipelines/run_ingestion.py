@@ -53,7 +53,7 @@ def run_ingestion():
     This function is safe for production execution.
     """
 
-    config = load_config()
+    config = load_config("config/config.yaml")
     logger = get_logger(config)
 
     logger.info("========== INGESTION PIPELINE STARTED ==========")
@@ -178,8 +178,8 @@ def run_ingestion():
         ensure_directory(processed_dir)
 
         output_path = os.path.join(
-            processed_dir,
-            f"cleaned_sales_{timestamp}.parquet"
+            processed_dir, 
+            "cleaned_sales.parquet"
         )
 
         df_cleaned.to_parquet(output_path, index=False)

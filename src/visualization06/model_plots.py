@@ -1,4 +1,4 @@
-# src/visualization06/model_plot.py
+# src/visualization06/model_plots.py
 
 """
 Model Visualization Module

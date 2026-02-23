@@ -66,25 +66,22 @@ def time_based_split(df: pd.DataFrame, config: Dict):
     return df.iloc[:split_index], df.iloc[split_index:]
 
 
+
 def _load_latest_model_ready(processed_path: str) -> pd.DataFrame:
 
-    files = [
-        f for f in os.listdir(processed_path)
-        if f.startswith("model_ready_") and f.endswith(".parquet")
-    ]
+    file_path = os.path.join(processed_path, "model_ready.parquet")
 
-    if not files:
+    if not os.path.exists(file_path):
         raise FileNotFoundError(
-            "No versioned model_ready_*.parquet found."
+            "model_ready.parquet not found. Run feature pipeline first."
         )
 
-    files.sort(reverse=True)
-    return pd.read_parquet(os.path.join(processed_path, files[0]))
+    return pd.read_parquet(file_path)
 
 
 def run_training():
 
-    config = load_config()
+    config = load_config("config/config.yaml")
     logger = get_logger(config)
 
     logger.info("Starting training pipeline.")

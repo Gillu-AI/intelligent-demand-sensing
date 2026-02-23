@@ -33,7 +33,7 @@ def run_features():
     Execute full feature engineering workflow.
     """
 
-    config = load_config()
+    config = load_config("config/config.yaml")
     logger = get_logger(config)
 
     logger.info("Starting feature engineering pipeline.")
@@ -53,28 +53,20 @@ def run_features():
         raise FileNotFoundError("Processed data directory not found.")
 
     # --------------------------------------------------
-    # 1. Load Latest Cleaned Dataset (Version-Aware)
+    # 1. Load Latest Cleaned Dataset
     # --------------------------------------------------
 
-    cleaned_files = [
-        f for f in os.listdir(processed_path)
-        if f.startswith("cleaned_sales_") and f.endswith(".parquet")
-    ]
-
-    if not cleaned_files:
+    cleaned_file = os.path.join(processed_path, "cleaned_sales.parquet")
+    if not os.path.exists(cleaned_file):
         raise FileNotFoundError(
-            "No versioned cleaned_sales_*.parquet found. "
-            "Run ingestion pipeline first."
+            "cleaned_sales.parquet not found. Run ingestion pipeline first."
         )
-
-    cleaned_files.sort(reverse=True)
-    cleaned_file = os.path.join(processed_path, cleaned_files[0])
 
     df = pd.read_parquet(cleaned_file)
 
     validate_dataframe_not_empty(df, "cleaned_sales")
 
-    logger.info(f"Loaded cleaned dataset: {cleaned_files[0]}")
+    logger.info("Loaded cleaned dataset:cleaned_sales.parquet")
     logger.info(f"Dataset shape: {df.shape}")
 
     date_col = config["data_schema"]["sales"]["date_column"]
@@ -88,9 +80,7 @@ def run_features():
 
     if config["features"]["time_features"]["enabled"]:
 
-        time_feature_list = config["features"]["time_features"].get(
-            "features", []
-        )
+        time_feature_list = config["features"]["time_features"]
 
         logger.info("Applying time features.")
         df = add_time_features(
@@ -199,11 +189,9 @@ def run_features():
 
     ensure_directory(processed_path)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
     output_file = os.path.join(
-        processed_path,
-        f"model_ready_{timestamp}.parquet"
+        processed_path, 
+        "model_ready.parquet"
     )
 
     df.to_parquet(output_file, index=False)

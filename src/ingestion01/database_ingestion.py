@@ -47,36 +47,8 @@ def ingest(
     dataset_name: str,
     dataset_cfg: Dict[str, Any],
     global_cfg: Dict[str, Any],
-    paths_cfg: Dict[str, Any],  # required by frozen contract
+    paths_cfg: Dict[str, Any],
 ) -> pd.DataFrame:
-    """
-    Ingest a dataset from a relational database.
-
-    Parameters
-    ----------
-    dataset_name : str
-        Logical dataset identifier
-    dataset_cfg : dict
-        Dataset-specific configuration
-    global_cfg : dict
-        Global ingestion configuration (unused, contract-required)
-    paths_cfg : dict
-        Paths configuration (unused, contract-required)
-
-    Returns
-    -------
-    pandas.DataFrame
-        Raw data loaded from the database
-
-    Raises
-    ------
-    ValueError
-        If configuration is invalid
-    EnvironmentError
-        If required credentials are missing
-    TypeError
-        If ingestion output violates the contract
-    """
 
     db_cfg = dataset_cfg.get("database")
     if not isinstance(db_cfg, dict):
@@ -90,7 +62,7 @@ def ingest(
     user_env = db_cfg.get("username_env")
     pass_env = db_cfg.get("password_env")
 
-    if not user_env or not pass_env:
+    if not isinstance(user_env, str) or not isinstance(pass_env, str):
         raise ValueError(
             f"[DB INGESTION] username_env and password_env must be defined "
             f"for dataset '{dataset_name}'"
@@ -108,20 +80,47 @@ def ingest(
     # --------------------------------------------------
     # Validate connection config
     # --------------------------------------------------
-    required_keys = {"engine", "host", "port", "database"}
+    required_keys = {"engine", "host", "port", "database", "fetch_size"}
     missing = required_keys - db_cfg.keys()
 
     if missing:
         raise ValueError(
             f"[DB INGESTION] Missing DB config keys for '{dataset_name}': {sorted(missing)}"
         )
-    
+
+    if not isinstance(db_cfg["engine"], str):
+        raise ValueError(f"[DB INGESTION] 'engine' must be string for '{dataset_name}'")
+
+    if not isinstance(db_cfg["host"], str):
+        raise ValueError(f"[DB INGESTION] 'host' must be string for '{dataset_name}'")
+
     if not isinstance(db_cfg["port"], int):
+        raise ValueError(f"[DB INGESTION] 'port' must be integer for '{dataset_name}'")
+
+    if not isinstance(db_cfg["database"], str):
+        raise ValueError(f"[DB INGESTION] 'database' must be string for '{dataset_name}'")
+
+    if not isinstance(db_cfg["fetch_size"], int) or db_cfg["fetch_size"] <= 0:
         raise ValueError(
-            f"[DB INGESTION] 'port' must be integer for '{dataset_name}'"
+            f"[DB INGESTION] 'fetch_size' must be positive integer for '{dataset_name}'"
         )
 
-   
+    # --------------------------------------------------
+    # Enforce single load mode
+    # --------------------------------------------------
+    has_query = "query" in db_cfg
+    has_table = "table" in db_cfg
+
+    if has_query and has_table:
+        raise ValueError(
+            f"[DB INGESTION] Define only ONE of 'query' or 'table' for '{dataset_name}'"
+        )
+
+    if not has_query and not has_table:
+        raise ValueError(
+            f"[DB INGESTION] Either 'query' or 'table' must be defined for '{dataset_name}'"
+        )
+
     engine_str = (
         f"{db_cfg['engine']}://{user}:{password}"
         f"@{db_cfg['host']}:{db_cfg['port']}"
@@ -134,68 +133,48 @@ def ingest(
 
     engine = create_engine(engine_str)
 
-
     # --------------------------------------------------
-    # Build SQL / Execute Load
+    # Execute Load
     # --------------------------------------------------
-    if "query" in db_cfg:
+    if has_query:
 
         sql = db_cfg["query"]
-        logger.info(
-            f"[DB INGESTION] Executing query load for dataset '{dataset_name}'"
-        )
+        if not isinstance(sql, str):
+            raise ValueError(
+                f"[DB INGESTION] 'query' must be string for '{dataset_name}'"
+            )
 
         result = pd.read_sql(
             sql,
             con=engine,
-            chunksize=db_cfg.get("fetch_size"),
+            chunksize=db_cfg["fetch_size"],
         )
 
-        if isinstance(result, pd.DataFrame):
-            df = result
-        else:
-            chunks = list(result)
-            if not chunks:
-                raise ValueError(
-                    f"[DB INGESTION] Query returned no data for '{dataset_name}'"
-                )
-            df = pd.concat(chunks, ignore_index=True)
-
-    elif "table" in db_cfg:
-
+    else:
         table = db_cfg["table"]
         schema = db_cfg.get("schema")
 
         if not isinstance(table, str):
             raise ValueError(
-                f"[DB INGESTION] 'table' must be a string for '{dataset_name}'"
+                f"[DB INGESTION] 'table' must be string for '{dataset_name}'"
             )
-
-        logger.info(
-            f"[DB INGESTION] Executing table load for dataset '{dataset_name}'"
-        )
 
         result = pd.read_sql_table(
             table_name=table,
             con=engine,
             schema=schema,
-            chunksize=db_cfg.get("fetch_size"),
+            chunksize=db_cfg["fetch_size"],
         )
 
-        if isinstance(result, pd.DataFrame):
-            df = result
-        else:
-            chunks = list(result)
-            if not chunks:
-                raise ValueError(
-                    f"[DB INGESTION] Table returned no data for '{dataset_name}'"
-                )
-            df = pd.concat(chunks, ignore_index=True)
-
+    if isinstance(result, pd.DataFrame):
+        df = result
     else:
-        raise ValueError(
-            f"[DB INGESTION] Either 'table' or 'query' must be defined for '{dataset_name}'"
-        )
+        chunks = list(result)
+        if not chunks:
+            raise ValueError(
+                f"[DB INGESTION] No data returned for '{dataset_name}'"
+            )
+        df = pd.concat(chunks, ignore_index=True)
 
     if not isinstance(df, pd.DataFrame):
         raise TypeError(

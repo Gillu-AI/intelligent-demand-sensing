@@ -1,4 +1,4 @@
-# src/modeling03/explainablity_SHAP.py
+# src/modeling03/explainability_SHAP.py
 
 """
 SHAP Explainability Module

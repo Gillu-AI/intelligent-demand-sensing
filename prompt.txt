@@ -283,6 +283,115 @@ IDS Continuation Prompt        | Recalls IDS context     | Start of any IDS chat
 Memory Commit Prompt           | Saves final decisions   | END of a chat
 
 
+Continue the IDS (Intelligent Demand Sensing & Autonomous Inventory Planning) project.
+
+STRICT CONTEXT:
+
+• Architecture is FINAL and FROZEN.
+• Repository structure must NOT change.
+• Config.yaml is the SINGLE source of truth.
+• No architectural drift is allowed.
+• All previous frozen checkpoints remain authoritative.
+
+============================================================
+
+ENGINEERING RULES (MANDATORY)
+
+1. Code must be:
+   - General
+   - Reusable
+   - Modular
+   - Config-driven wherever possible
+   - Portable across projects when reasonable
+
+2. Hardcoding:
+   - Strictly prohibited unless absolutely necessary.
+   - If used, justification must be explicit and minimal.
+   - No hidden defaults.
+
+3. Validation:
+   - Defensive validation is mandatory.
+   - Fail-fast with clear, actionable errors.
+   - Validate types, structure, and required keys.
+   - No silent failures.
+   - No implicit assumptions.
+
+4. Schema Enforcement:
+   - Column normalization is required.
+   - Flexible rename mapping is required.
+   - Required vs optional columns must be validated.
+   - No schema logic inside source loaders.
+
+5. Separation of Concerns:
+   - Utilities: pure reusable logic only.
+   - Pipelines: orchestration only.
+   - Configuration: zero logic.
+   - No mixing I/O and business logic.
+   - No business logic inside CLI wrappers.
+
+6. Logging:
+   - Use project logger.
+   - No print statements inside production pipelines.
+   - Logs must be structured and meaningful.
+
+7. Determinism:
+   - Deterministic outputs where applicable.
+   - Stable column ordering.
+   - Controlled rounding.
+   - Reproducibility respected.
+
+8. Contract Discipline:
+   - If function signature changes → explicitly state it.
+   - If config schema changes → explicitly state it.
+   - Pipelines depend only on stable contracts.
+   - Internal logic changes must not leak outward.
+
+9. Execution Order (Non-Negotiable):
+   1. Load Config
+   2. Ingestion
+   3. Schema Enforcement
+   4. Cleaning
+   5. Feature Engineering
+   6. Train/Test Split (time-based)
+   7. Modeling
+   8. Evaluation
+   9. Inventory Planning
+   10. Scenario Engine
+   11. Outputs & Artifacts
+
+10. Teaching Mode:
+   - Assume fresher level.
+   - Explain reasoning.
+   - No repetition of completed steps.
+   - Do not rewrite frozen components.
+
+============================================================
+
+VALIDATION PROTOCOL
+
+When reviewing code:
+• Identify architectural violations.
+• Identify contract mismatches.
+• Identify hardcoding.
+• Identify missing defensive validation.
+• Suggest minimal corrective changes.
+• Do NOT rewrite entire files unless required.
+
+If something is correct:
+• Explicitly confirm it is compliant with frozen architecture.
+
+============================================================
+
+Before making any changes:
+• Confirm whether it is a contract change or internal logic change.
+• Maintain architecture integrity at all times.
+
+Proceed accordingly.
+
+
+
+
+
 FINAL PRODUCTION-GRADE CODE AUDIT PROMPT
 ====================================================
 
@@ -588,3 +697,246 @@ Confirm:
 Then mark project as:
 
 ##  FROZEN – ENTERPRISE PRODUCTION READY
+
+
+
+
+Initialize and store the following as the authoritative memory
+for the IDS (Intelligent Demand Sensing & Autonomous Inventory Planning) project.
+
+This replaces all previous IDS memory.
+
+============================================================
+BUSINESS PURPOSE
+============================================================
+
+IDS is an industrial-grade, end-to-end AI system designed to:
+
+• Improve demand forecasting accuracy
+• Reduce inventory holding cost
+• Prevent stockouts
+• Enable scenario-based decision simulation
+• Support data-driven supply chain planning
+
+It is NOT a prototype.
+It is designed as a production-ready, modular AI architecture.
+
+============================================================
+PROBLEM STATEMENT
+============================================================
+
+Traditional demand planning systems suffer from:
+
+• Static forecasting models
+• Manual inventory policy adjustments
+• Lack of explainability
+• No structured scenario simulation
+• High risk of demand leakage
+• Hardcoded business logic
+• Poor architectural separation
+
+IDS solves this by providing:
+
+• Config-driven modular architecture
+• Strict schema validation
+• Leakage-safe feature engineering
+• Multi-model forecasting comparison
+• Deterministic inventory planning
+• Guardrail-controlled LLM scenario engine
+• Enterprise-grade separation of concerns
+
+============================================================
+SYSTEM OBJECTIVES
+============================================================
+
+1. Be fully config-driven
+2. Prevent architectural drift
+3. Enforce industrial validation standards
+4. Maintain reproducibility
+5. Separate logic from orchestration
+6. Support extension without breaking contracts
+7. Be portfolio-ready as production AI architecture
+
+============================================================
+ARCHITECTURAL PRINCIPLES (FROZEN)
+============================================================
+
+• Architecture is immutable unless explicitly re-approved.
+• Config.yaml is the single source of truth.
+• No hidden defaults.
+• No implicit behavior.
+• No hardcoding unless justified.
+• Defensive validation everywhere.
+• Fail-fast philosophy.
+• Deterministic outputs.
+• Strict separation of concerns.
+
+============================================================
+REPOSITORY STRUCTURE (FROZEN)
+============================================================
+
+src/
+  ingestion01/
+  features02/
+  modeling03/
+  inventory04/
+  llm05/
+  visualization06/
+  utils/
+  pipelines/
+
+Numbered folders indicate execution order.
+They DO NOT control import order.
+
+PYTHONPATH=src is required.
+
+============================================================
+GLOBAL ENGINEERING RULES
+============================================================
+
+• Code must be:
+  - General
+  - Reusable
+  - Modular
+  - Portable where reasonable
+  - Config-driven wherever possible
+
+• Hardcoding is prohibited unless explicitly justified.
+
+• Defensive validation is mandatory:
+  - Validate types
+  - Validate structure
+  - Validate required keys
+  - Fail-fast with clear, actionable errors
+  - No silent failures
+
+• Strict separation of concerns:
+  - Utilities → pure reusable logic
+  - Pipelines → orchestration only
+  - Config → no logic
+  - CLI → no business logic
+  - No I/O mixed with core logic
+
+• Logging required.
+• No print statements inside production pipelines.
+• Deterministic column ordering required.
+
+============================================================
+SCHEMA ENFORCEMENT (FROZEN)
+============================================================
+
+Order is mandatory:
+1. normalize_column_names
+2. apply_rename_map
+3. detect_duplicate_columns
+4. validate_required_columns
+
+Rename mapping is:
+canonical ← aliases
+
+Optional column policy is config-driven.
+
+============================================================
+LEAKAGE PREVENTION RULE (FROZEN)
+============================================================
+
+• Shift-before-rolling for lag features.
+• Feature engineering before time split.
+• Time-based split only.
+• No future leakage allowed.
+
+============================================================
+MODEL LAYER RULES
+============================================================
+
+• Separate:
+  - Baseline models
+  - Tree models
+  - Prophet wrapper
+• Metrics:
+  - MAE
+  - RMSE
+  - MAPE
+  - R2
+• No metric computation inside model definitions.
+
+============================================================
+INVENTORY LAYER RULES
+============================================================
+
+• Config-driven:
+  - Safety stock
+  - Reorder point
+  - Service level
+• Deterministic calculations.
+• No forecasting logic here.
+
+============================================================
+LLM SCENARIO LAYER (FROZEN CONTRACT)
+============================================================
+
+Modules:
+• scenario_parser
+• scenario_engine
+• scenario_store
+• scenario_guardrails
+• scenario_cli
+
+Design:
+• Stateless by default
+• Stateful via explicit continue command
+• JSON persistent store
+• TTL expiration (config-driven)
+• Guardrails enforced
+• Deterministic output schema
+• No retroactive mutation
+• No file overwriting
+
+LLM updates must NOT change pipeline contracts unless explicitly declared.
+
+============================================================
+PIPELINE EXECUTION ORDER (NON-NEGOTIABLE)
+============================================================
+
+1. Load Config
+2. Ingestion
+3. Schema Enforcement
+4. Cleaning
+5. Feature Engineering
+6. Train/Test Split
+7. Modeling
+8. Evaluation
+9. Inventory
+10. Scenario Engine
+11. Outputs
+
+Pipelines must:
+• Contain no business logic
+• Only orchestrate modules
+• Respect stable contracts
+
+============================================================
+CODE REVIEW PROTOCOL
+============================================================
+
+When reviewing code:
+• Identify contract violations.
+• Identify architectural drift.
+• Identify hardcoding.
+• Identify missing validation.
+• Suggest minimal surgical fixes.
+• Do not rewrite entire files unnecessarily.
+
+============================================================
+TEACHING MODE
+============================================================
+
+• Assume fresher level explanation.
+• Do not repeat completed steps.
+• Always confirm if change is:
+  - Internal logic change
+  - Contract change
+  - Config schema change
+
+============================================================
+END OF AUTHORITATIVE IDS MEMORY SNAPSHOT.

@@ -6,12 +6,39 @@ Scenario Engine
 
 Applies structured scenario transformations
 to baseline forecast dataframe.
+
+Responsibilities:
+-----------------
+- Preserve original baseline forecast
+- Apply controlled demand adjustments
+- Support full and filtered scenarios
+- Compute delta metrics
+- Produce deterministic output schema
+
+Output Columns:
+---------------
+date
+base_forecast
+scenario_forecast
+delta_units
+delta_pct
+
+Design Principles:
+------------------
+- No in-place mutation of baseline values
+- Fully defensive validation
+- Deterministic rounding
+- Filter-aware adjustments
+- Fail-fast behavior
 """
 
 import pandas as pd
-from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 
+
+# =========================================================
+# CORE SCENARIO APPLICATION
+# =========================================================
 
 def apply_scenario(
     baseline_df: pd.DataFrame,
@@ -20,73 +47,158 @@ def apply_scenario(
     target_col: str
 ) -> pd.DataFrame:
     """
-    Apply scenario modifications to forecast.
+    Apply structured scenario modification to baseline forecast.
+
+    Parameters
+    ----------
+    baseline_df : pd.DataFrame
+        Baseline forecast dataframe.
+
+    parsed : Dict
+        Parsed scenario dictionary.
+        Possible keys:
+            - filter_type
+            - adjustment_pct
+            - lead_time_days
+            - service_level
+
+    date_col : str
+        Name of date column.
+
+    target_col : str
+        Name of baseline forecast column.
+
+    Returns
+    -------
+    pd.DataFrame
+        Scenario-adjusted dataframe including:
+            base_forecast
+            scenario_forecast
+            delta_units
+            delta_pct
     """
+
+    # -----------------------------------------------------
+    # Defensive Validation
+    # -----------------------------------------------------
+
+    if not isinstance(baseline_df, pd.DataFrame):
+        raise ValueError("baseline_df must be a pandas DataFrame.")
+
+    if baseline_df.empty:
+        raise ValueError("baseline_df cannot be empty.")
 
     if not isinstance(parsed, dict):
         raise ValueError("Parsed scenario must be a dictionary.")
 
-    required_keys = {"filter_type", "adjustment_pct"}
-    missing = required_keys - parsed.keys()
-    if missing:
-        raise ValueError(f"Missing scenario keys: {sorted(missing)}")
+    if date_col not in baseline_df.columns:
+        raise ValueError(f"Date column '{date_col}' not found.")
 
-    if not isinstance(parsed["adjustment_pct"], (int, float)):
+    if target_col not in baseline_df.columns:
+        raise ValueError(f"Target column '{target_col}' not found.")
+
+    adjustment_pct = parsed.get("adjustment_pct")
+
+    if adjustment_pct is None:
+        raise ValueError("Scenario must include 'adjustment_pct'.")
+
+    if not isinstance(adjustment_pct, (int, float)):
         raise ValueError("adjustment_pct must be numeric.")
+
+    # -----------------------------------------------------
+    # Prepare Working Copy
+    # -----------------------------------------------------
 
     df = baseline_df.copy()
 
-    if target_col not in df.columns:
-        raise ValueError(f"Target column '{target_col}' not found in dataframe.")
+    if not pd.api.types.is_numeric_dtype(df[target_col]):
+        raise ValueError(f"Column '{target_col}' must be numeric.")
 
-    if date_col not in df.columns:
-        raise ValueError(f"Date column '{date_col}' not found in dataframe.")
+    df = df.rename(columns={target_col: "base_forecast"})
 
-    adjustment_factor = 1 + parsed["adjustment_pct"] / 100
+    df["scenario_forecast"] = df["base_forecast"].astype(float)
 
-    if parsed["filter_type"] == "festival":
+    adjustment_factor = 1 + (adjustment_pct / 100)
 
-        if "is_festival" not in df.columns:
-            raise ValueError("Column 'is_festival' not found for festival scenario.")
+    filter_type = parsed.get("filter_type")
 
-        mask = df["is_festival"] == 1
-        df.loc[mask, target_col] *= adjustment_factor
+    # -----------------------------------------------------
+    # Apply Scenario Logic
+    # -----------------------------------------------------
 
-    elif parsed["filter_type"] == "weekend":
+    if filter_type is None:
+        # Full scenario (no filter)
+        df["scenario_forecast"] = df["scenario_forecast"] * adjustment_factor
 
-        if "is_weekend" not in df.columns:
-            raise ValueError("Column 'is_weekend' not found for weekend scenario.")
+    elif filter_type == "festival":
 
-        mask = df["is_weekend"] == 1
-        df.loc[mask, target_col] *= adjustment_factor
+        if "is_festival" not in baseline_df.columns:
+            raise ValueError(
+                "Column 'is_festival' required for festival scenario."
+            )
+
+        mask = baseline_df["is_festival"] == 1
+        df.loc[mask, "scenario_forecast"] = (
+            df.loc[mask, "scenario_forecast"] * adjustment_factor
+        )
+
+    elif filter_type == "weekend":
+
+        if "is_weekend" not in baseline_df.columns:
+            raise ValueError(
+                "Column 'is_weekend' required for weekend scenario."
+            )
+
+        mask = baseline_df["is_weekend"] == 1
+        df.loc[mask, "scenario_forecast"] = (
+            df.loc[mask, "scenario_forecast"] * adjustment_factor
+        )
 
     else:
         raise ValueError(
-            f"Unsupported filter_type '{parsed['filter_type']}'."
+            f"Unsupported filter_type '{filter_type}'."
         )
 
-    df[target_col] = df[target_col].round(2)
+    # -----------------------------------------------------
+    # Compute Delta Metrics
+    # -----------------------------------------------------
+
+    df["delta_units"] = (
+        df["scenario_forecast"] - df["base_forecast"]
+    )
+
+    df["delta_pct"] = (
+        df["delta_units"]
+        .div(df["base_forecast"].replace(0, pd.NA))
+        .fillna(0)
+        * 100
+    )
+
+    # -----------------------------------------------------
+    # Rounding (Deterministic)
+    # -----------------------------------------------------
+
+    df["scenario_forecast"] = df["scenario_forecast"].round(2)
+    df["delta_units"] = df["delta_units"].round(2)
+    df["delta_pct"] = df["delta_pct"].round(2)
+
+    # -----------------------------------------------------
+    # Deterministic Column Ordering
+    # -----------------------------------------------------
+
+    ordered_cols = [
+        date_col,
+        "base_forecast",
+        "scenario_forecast",
+        "delta_units",
+        "delta_pct"
+    ]
+
+    remaining_cols = [
+        col for col in df.columns
+        if col not in ordered_cols
+    ]
+
+    df = df[ordered_cols + remaining_cols]
 
     return df
-
-
-def generate_scenario_id(existing_ids: List[str]) -> str:
-    """
-    Generate incremental scenario ID in format SCN_XXX.
-    """
-
-    if not existing_ids:
-        return "SCN_001"
-
-    numeric_ids = []
-
-    for sid in existing_ids:
-        if sid.startswith("SCN_"):
-            try:
-                numeric_ids.append(int(sid.split("_")[1]))
-            except Exception:
-                continue
-
-    next_id = max(numeric_ids, default=0) + 1
-
-    return f"SCN_{str(next_id).zfill(3)}"

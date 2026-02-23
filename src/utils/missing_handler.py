@@ -49,6 +49,12 @@ def handle_duplicates(
     if not isinstance(unique_key, list):
         raise ValueError("unique_key must be a list of column names.")
 
+    missing_cols = set(unique_key) - set(df.columns)
+    if missing_cols:
+        raise ValueError(
+            f"Duplicate handling failed. Columns not found: {sorted(missing_cols)}"
+        )
+
     duplicate_count = df.duplicated(subset=unique_key).sum()
 
     if duplicate_count == 0:
@@ -160,30 +166,47 @@ def handle_missing_values(
             f"Missing data_cleaning configuration for dataset '{dataset_name}'."
         )
 
-    df = df.copy()
-
     cleaning_config = config["data_cleaning"][dataset_name]
+
+    if not isinstance(cleaning_config, dict):
+        raise ValueError(
+            f"Invalid data_cleaning configuration for dataset '{dataset_name}'."
+        )
+
     missing_config = cleaning_config.get("missing", {})
     per_column_override = cleaning_config.get("per_column", {})
+
+    if not isinstance(missing_config, dict):
+        raise ValueError(
+            f"Invalid missing configuration for dataset '{dataset_name}'."
+        )
+
+    if not isinstance(per_column_override, dict):
+        raise ValueError(
+            f"Invalid per_column configuration for dataset '{dataset_name}'."
+        )
+
+    df = df.copy()
 
     for col in df.columns:
 
         if df[col].isna().sum() == 0:
             continue
 
-        # --------------------------------------------------
-        # Per-column override (dtype-aware routing)
-        # --------------------------------------------------
-
         if col in per_column_override:
 
             strategy = per_column_override[col]
 
-            if pd.api.types.is_numeric_dtype(df[col]):
-                df[col] = _impute_numeric(df[col], strategy)
+            if not isinstance(strategy, str):
+                raise ValueError(
+                    f"Invalid strategy for column '{col}'. Must be string."
+                )
 
-            elif pd.api.types.is_bool_dtype(df[col]):
+            if pd.api.types.is_bool_dtype(df[col]):
                 df[col] = _impute_boolean(df[col], strategy)
+
+            elif pd.api.types.is_numeric_dtype(df[col]):
+                df[col] = _impute_numeric(df[col], strategy)
 
             elif pd.api.types.is_datetime64_any_dtype(df[col]):
                 if strategy == "ffill":
@@ -197,26 +220,33 @@ def handle_missing_values(
                         f"Invalid datetime strategy '{strategy}' "
                         f"for column '{col}'."
                     )
-
             else:
                 df[col] = _impute_categorical(df[col], strategy)
 
             continue
 
-        # --------------------------------------------------
-        # Default Type-Based Strategy
-        # --------------------------------------------------
-
-        if pd.api.types.is_numeric_dtype(df[col]):
-            strategy = missing_config.get("numeric", "median")
-            df[col] = _impute_numeric(df[col], strategy)
-
-        elif pd.api.types.is_bool_dtype(df[col]):
-            strategy = missing_config.get("boolean", "mode")
+        if pd.api.types.is_bool_dtype(df[col]):
+            if "boolean" not in missing_config:
+                raise ValueError(
+                    f"Missing boolean strategy in config for dataset '{dataset_name}'."
+                )
+            strategy = missing_config["boolean"]
             df[col] = _impute_boolean(df[col], strategy)
 
+        elif pd.api.types.is_numeric_dtype(df[col]):
+            if "numeric" not in missing_config:
+                raise ValueError(
+                    f"Missing numeric strategy in config for dataset '{dataset_name}'."
+                )
+            strategy = missing_config["numeric"]
+            df[col] = _impute_numeric(df[col], strategy)
+
         elif pd.api.types.is_datetime64_any_dtype(df[col]):
-            strategy = missing_config.get("datetime", "none")
+            if "datetime" not in missing_config:
+                raise ValueError(
+                    f"Missing datetime strategy in config for dataset '{dataset_name}'."
+                )
+            strategy = missing_config["datetime"]
 
             if strategy == "ffill":
                 df[col] = df[col].fillna(method="ffill")
@@ -234,7 +264,11 @@ def handle_missing_values(
                 )
 
         else:
-            strategy = missing_config.get("categorical", "unknown")
+            if "categorical" not in missing_config:
+                raise ValueError(
+                    f"Missing categorical strategy in config for dataset '{dataset_name}'."
+                )
+            strategy = missing_config["categorical"]
             df[col] = _impute_categorical(df[col], strategy)
 
     return df

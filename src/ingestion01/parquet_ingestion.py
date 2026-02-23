@@ -36,7 +36,6 @@ This module is intentionally dumb and isolated.
 from pathlib import Path
 from typing import Dict, Any
 import logging
-
 import pandas as pd
 
 
@@ -49,35 +48,6 @@ def ingest(
     global_cfg: Dict[str, Any],
     paths_cfg: Dict[str, Any],
 ) -> pd.DataFrame:
-    """
-    Ingest a Parquet dataset based strictly on configuration
-    provided in config.yaml.
-
-    Parameters
-    ----------
-    dataset_name : str
-        Logical dataset identifier (used for logging and error context)
-    dataset_cfg : dict
-        Dataset-specific ingestion configuration
-    global_cfg : dict
-        Global ingestion configuration (unused but required by contract)
-    paths_cfg : dict
-        Resolved project paths configuration
-
-    Returns
-    -------
-    pandas.DataFrame
-        Raw DataFrame loaded from the Parquet file
-
-    Raises
-    ------
-    ValueError
-        If required configuration keys are missing
-    FileNotFoundError
-        If the Parquet file does not exist
-    TypeError
-        If ingestion output violates the expected contract
-    """
 
     # --------------------------------------------------
     # Resolve file path
@@ -95,11 +65,34 @@ def ingest(
 
     if not file_path.exists():
         raise FileNotFoundError(
-            f"[PARQUET INGESTION] File not found for dataset '{dataset_name}': {file_path}"
+            f"[PARQUET INGESTION] File not found for dataset "
+            f"'{dataset_name}': {file_path}"
         )
 
-    parquet_cfg = dataset_cfg.get("parquet", {})
-    engine = parquet_cfg.get("engine")
+    # --------------------------------------------------
+    # Parquet-specific config (MANDATORY)
+    # --------------------------------------------------
+    if "parquet" not in dataset_cfg:
+        raise ValueError(
+            f"[PARQUET INGESTION] Missing 'parquet' config block "
+            f"for dataset '{dataset_name}'"
+        )
+
+    parquet_cfg = dataset_cfg["parquet"]
+
+    if "engine" not in parquet_cfg:
+        raise ValueError(
+            f"[PARQUET INGESTION] Missing 'engine' in parquet config "
+            f"for dataset '{dataset_name}'"
+        )
+
+    engine = parquet_cfg["engine"]
+
+    if not isinstance(engine, str) or not engine:
+        raise ValueError(
+            f"[PARQUET INGESTION] 'engine' must be a non-empty string "
+            f"for dataset '{dataset_name}'"
+        )
 
     logger.info(
         f"[PARQUET INGESTION] Reading dataset '{dataset_name}' from {file_path}"
@@ -120,8 +113,8 @@ def ingest(
         )
 
     logger.info(
-        f"[PARQUET INGESTION] Successfully loaded dataset '{dataset_name}' "
-        f"with shape {df.shape}"
+        f"[PARQUET INGESTION] Successfully loaded dataset "
+            f"'{dataset_name}' with shape {df.shape}"
     )
 
     return df

@@ -22,7 +22,6 @@ This module is intentionally dumb and reusable.
 from pathlib import Path
 from typing import Dict
 import logging
-
 import pandas as pd
 
 
@@ -37,31 +36,6 @@ def ingest(
 ) -> pd.DataFrame:
     """
     Ingest a CSV dataset based on configuration provided in config.yaml.
-
-    Parameters
-    ----------
-    dataset_name : str
-        Logical name of the dataset (used for logging and error context)
-    dataset_cfg : dict
-        Dataset-specific ingestion configuration (file, csv block, etc.)
-    global_cfg : dict
-        Global ingestion configuration (header, skip_rows, na_values)
-    paths_cfg : dict
-        Resolved project paths configuration
-
-    Returns
-    -------
-    pandas.DataFrame
-        Raw DataFrame loaded from the CSV file
-
-    Raises
-    ------
-    ValueError
-        If required configuration keys are missing
-    FileNotFoundError
-        If the CSV file does not exist
-    TypeError
-        If ingestion does not return a pandas DataFrame
     """
 
     # --------------------------------------------------
@@ -73,7 +47,7 @@ def ingest(
     if not isinstance(file_name, str) or not file_name:
         raise ValueError(
             f"[CSV INGESTION] 'file' must be a non-empty string for dataset '{dataset_name}'"
-        ) 
+        )
 
     file_path = raw_dir / file_name
 
@@ -85,7 +59,6 @@ def ingest(
     # --------------------------------------------------
     # Global ingestion config (MANDATORY)
     # --------------------------------------------------
-    
     required_global_keys = {"header", "skip_rows", "na_values"}
     missing_keys = required_global_keys - global_cfg.keys()
 
@@ -95,17 +68,17 @@ def ingest(
             f"{sorted(missing_keys)}"
         )
 
-        header_flag = global_cfg["header"]
+    header_flag = global_cfg["header"]
 
-        if not isinstance(header_flag, bool):
-            raise ValueError(
-                f"[CSV INGESTION] 'header' must be boolean for dataset '{dataset_name}'"
-            )
+    if not isinstance(header_flag, bool):
+        raise ValueError(
+            f"[CSV INGESTION] 'header' must be boolean for dataset '{dataset_name}'"
+        )
 
-        skip_rows = global_cfg["skip_rows"]
-        na_values = global_cfg["na_values"]
+    skip_rows = global_cfg["skip_rows"]
+    na_values = global_cfg["na_values"]
 
-        header = 0 if header_flag else None
+    header = 0 if header_flag else None
 
     # --------------------------------------------------
     # CSV-specific config (MANDATORY)

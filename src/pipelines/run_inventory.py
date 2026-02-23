@@ -46,7 +46,7 @@ def run_inventory():
     Execute full inventory planning workflow.
     """
 
-    config = load_config()
+    config = load_config("config/config.yaml")
     logger = get_logger(config)
 
     logger.info("========== INVENTORY PIPELINE STARTED ==========")
@@ -117,11 +117,36 @@ def run_inventory():
     # ------------------------------------------------------
 
     logger.info("Generating recursive future forecast.")
+    calendar_df = pd.DataFrame()
+
+    if config["features"]["calendar_features"]["enabled"]:
+
+        calendar_dataset_cfg = config["ingestion"]["datasets"].get("calendar")
+
+        if not calendar_dataset_cfg:
+            raise ValueError("Calendar dataset not configured under ingestion.datasets.")
+
+        calendar_path = os.path.join(
+            config["paths"]["data"]["raw"],
+            calendar_dataset_cfg["file"]
+        )
+
+        if not os.path.exists(calendar_path):
+            raise FileNotFoundError("Configured calendar file not found.")
+
+        calendar_df = pd.read_csv(calendar_path)
+
+        calendar_date_col = config["data_schema"]["calendar"]["date_column"]
+
+        calendar_df[calendar_date_col] = pd.to_datetime(
+            calendar_df[calendar_date_col],
+            errors="raise"
+        )
 
     future_df = recursive_forecast(
         model=model,
         historical_df=df,
-        calendar_df=pd.DataFrame(),  # Calendar optional (config-driven)
+        calendar_df=calendar_df,
         config=config
     )
 
@@ -241,11 +266,9 @@ def run_inventory():
     inventory_output_dir = config["paths"]["output"]["inventory"]
     ensure_directory(inventory_output_dir)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-
     versioned_path = os.path.join(
         inventory_output_dir,
-        f"inventory_plan_{timestamp}.csv"
+        "inventory_plan.csv"
     )
 
     latest_path = os.path.join(

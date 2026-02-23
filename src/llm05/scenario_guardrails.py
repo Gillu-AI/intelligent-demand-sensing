@@ -4,55 +4,124 @@
 Scenario Guardrails
 ===================
 
-Prevents unsafe or invalid scenario execution.
+Enforces strict business and logical constraints
+before scenario execution.
+
+Purpose:
+--------
+Prevent unsafe, unrealistic, or governance-violating
+scenario transformations.
+
+Strict Rules:
+-------------
+- Demand adjustment: ±50%
+- Lead time: ≤ 90 days
+- Service level: 0.80–0.99
+
+Behavior:
+---------
+- Fail-fast validation
+- No partial execution
+- Clear, actionable error messages
+- Fully defensive input checking
 """
 
 from typing import Dict
 
 
-def validate_scenario(parsed: Dict):
+# =========================================================
+# SCENARIO VALIDATION
+# =========================================================
+
+def validate_scenario(parsed: Dict) -> bool:
     """
-    Enforce business and logical constraints.
+    Validate parsed scenario dictionary against
+    industrial guardrail constraints.
+
+    Parameters
+    ----------
+    parsed : Dict
+        Parsed structured scenario dictionary.
+
+    Returns
+    -------
+    bool
+        True if validation passes.
+
+    Raises
+    ------
+    ValueError
+        If any guardrail is violated.
     """
 
     if not isinstance(parsed, dict):
         raise ValueError("Parsed scenario must be a dictionary.")
 
-    # --------------------------------------------------
-    # Adjustment Percentage Validation
-    # --------------------------------------------------
+    # =====================================================
+    # Demand Adjustment Guardrail
+    # =====================================================
 
     if "adjustment_pct" in parsed:
 
-        if not isinstance(parsed["adjustment_pct"], (int, float)):
-            raise ValueError("adjustment_pct must be numeric.")
+        adjustment = parsed["adjustment_pct"]
 
-        if abs(parsed["adjustment_pct"]) > 200:
-            raise ValueError("Adjustment percentage too large.")
+        if not isinstance(adjustment, (int, float)):
+            raise ValueError("Demand adjustment must be numeric.")
 
-    # --------------------------------------------------
+        if abs(adjustment) > 50:
+            raise ValueError(
+                "Demand adjustment exceeds ±50% limit."
+            )
+
+    # =====================================================
     # Filter Type Validation
-    # --------------------------------------------------
+    # =====================================================
 
     if "filter_type" in parsed:
 
         allowed_filters = {"festival", "weekend"}
 
-        if parsed["filter_type"] is not None and \
-           parsed["filter_type"] not in allowed_filters:
+        filter_type = parsed["filter_type"]
 
-            raise ValueError("Unsupported filter type.")
+        if filter_type is not None and filter_type not in allowed_filters:
+            raise ValueError(
+                f"Unsupported filter type '{filter_type}'. "
+                f"Allowed values: {sorted(allowed_filters)}"
+            )
 
-    # --------------------------------------------------
-    # Lead Time Validation (if used in future)
-    # --------------------------------------------------
+    # =====================================================
+    # Lead Time Guardrail
+    # =====================================================
 
     if "lead_time_days" in parsed:
 
-        if not isinstance(parsed["lead_time_days"], (int, float)):
-            raise ValueError("lead_time_days must be numeric.")
+        lead_time = parsed["lead_time_days"]
 
-        if parsed["lead_time_days"] < 0:
+        if not isinstance(lead_time, (int, float)):
+            raise ValueError("Lead time must be numeric.")
+
+        if lead_time < 0:
             raise ValueError("Lead time cannot be negative.")
+
+        if lead_time > 90:
+            raise ValueError(
+                "Lead time exceeds maximum allowed limit of 90 days."
+            )
+
+    # =====================================================
+    # Service Level Guardrail
+    # =====================================================
+
+    if "service_level" in parsed:
+
+        service_level = parsed["service_level"]
+
+        if not isinstance(service_level, (int, float)):
+            raise ValueError("Service level must be numeric.")
+
+        if service_level < 0.80 or service_level > 0.99:
+            raise ValueError(
+                "Service level must be between 0.80 and 0.99."
+            )
 
     return True

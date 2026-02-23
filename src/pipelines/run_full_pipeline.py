@@ -52,7 +52,7 @@ def run_full_pipeline():
     prod  → Forecast + inventory only (no retraining, no visualization)
     """
 
-    config = load_config()
+    config = load_config("config/config.yaml")
     logger = get_logger(config)
 
     execution_mode = config.get("execution", {}).get("mode", "train")

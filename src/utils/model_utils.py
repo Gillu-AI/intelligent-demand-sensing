@@ -28,18 +28,17 @@ def train_model(model, X: pd.DataFrame, y: pd.Series):
     - Centralized to avoid duplication across model modules.
     """
 
-    # --------------------------------------------------
-    # Defensive Validation
-    # --------------------------------------------------
-
     if model is None:
         raise ValueError("Model instance cannot be None.")
+
+    if not hasattr(model, "fit"):
+        raise TypeError("Model must implement a fit() method.")
 
     if not isinstance(X, pd.DataFrame):
         raise TypeError("X must be a pandas DataFrame.")
 
     if not isinstance(y, (pd.Series, pd.DataFrame)):
-        raise TypeError("y must be a pandas Series.")
+        raise TypeError("y must be a pandas Series or single-column DataFrame.")
 
     if X.empty:
         raise ValueError("Feature matrix X is empty.")
@@ -56,9 +55,10 @@ def train_model(model, X: pd.DataFrame, y: pd.Series):
     if X.shape[1] == 0:
         raise ValueError("Feature matrix X has no columns.")
 
-    # --------------------------------------------------
-    # Model Training
-    # --------------------------------------------------
+    if isinstance(y, pd.DataFrame):
+        if y.shape[1] != 1:
+            raise ValueError("Target DataFrame must contain exactly one column.")
+        y = y.iloc[:, 0]
 
     model.fit(X, y)
 

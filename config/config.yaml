@@ -1,3 +1,5 @@
+# config/config.yaml
+
 # =====================================================================
 # Intelligent Demand Sensing & Autonomous Inventory Planning (IDS)
 # =====================================================================
@@ -34,7 +36,6 @@ paths:
   data:
     raw: "data/raw"
     processed: "data/processed"
-    calendar: "data/calendar"
     external: "data/external"
 
   output:
@@ -309,6 +310,9 @@ modeling:
 
     linear_regression:
       enabled: true
+    
+    ridge:
+    enabled: true
 
     random_forest:
       enabled: true
@@ -331,7 +335,7 @@ modeling:
         max_depth: -1
 
     prophet:
-      enabled: true
+      enabled: false
       yearly_seasonality: true
       weekly_seasonality: true
 
@@ -404,16 +408,45 @@ forecasting:
 
 
 # =====================================================================
-# LLM What-If Agent Configuration
+# LLM What-If Scenario Engine Configuration
 # =====================================================================
 llm:
   enabled: true
 
-  # Scenario persistence (JSON-based storage)
-  storage_path: "data/external/scenario_store.json"
+  # ---------------------------------------------------------
+  # Session Management
+  # ---------------------------------------------------------
+  session:
+    enabled: true
+    auto_create_session: true
+    include_timestamp_in_filename: true
+
+  # ---------------------------------------------------------
+  # Output Folder Structure (Option B - Approved)
+  # ---------------------------------------------------------
+  output_structure:
+    use_session_subfolders: true
+    scenarios_subfolder: "scenarios"
+    comparisons_subfolder: "comparisons"
+    store_subfolder: "store"
+
+  # ---------------------------------------------------------
+  # Scenario Persistence (JSON Store)
+  # ---------------------------------------------------------
+  storage_path: "output/scenarios/store/scenario_store.json"
   scenario_ttl_hours: 24
 
-  # Default runtime behavior
+  # ---------------------------------------------------------
+  # Scenario ID Formatting
+  # ---------------------------------------------------------
+  id_format:
+    prefix: "SCN"
+    include_timestamp: true
+    counter_padding: 3
+
+  # ---------------------------------------------------------
+  # Runtime Mode
+  # ---------------------------------------------------------
   default_mode: "stateless"   # stateless | stateful
 
   runtime_control:
@@ -421,15 +454,32 @@ llm:
     allow_in_training: true
     allow_in_ci: false
 
-  # Model configuration
+  # ---------------------------------------------------------
+  # Model Configuration (LLM Provider)
+  # ---------------------------------------------------------
   model_name: "gpt-4"
+  provider: "openai"
   temperature: 0.2
   max_tokens: 500
   fallback_regex: true
 
+  # ---------------------------------------------------------
+  # Strict Guardrails (Enterprise Enforcement)
+  # ---------------------------------------------------------
   guardrails:
     max_demand_change_pct: 50
-    max_lead_time_multiplier: 3
+    max_lead_time_days: 90
+    service_level_range:
+      min: 0.80
+      max: 0.99
+
+  # ---------------------------------------------------------
+  # Comparison Engine
+  # ---------------------------------------------------------
+  comparison:
+    enabled: true
+    recompute_inventory: true
+    export_markdown: true
 
 
 # =====================================================================

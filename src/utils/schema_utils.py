@@ -51,6 +51,7 @@ def normalize_column_names(columns: Iterable[str]) -> List[str]:
     - Collapse multiple underscores
     """
 
+    columns = list(columns)
     normalized = []
 
     for col in columns:
@@ -86,6 +87,13 @@ def apply_rename_map(
     Duplicate detection must be done explicitly after this step.
     """
 
+    columns = list(columns)
+
+    if not isinstance(rename_map, dict):
+        raise SchemaValidationError(
+            "rename_map must be a dictionary."
+        )
+
     reverse_map = {}
     seen_aliases = set()
 
@@ -113,12 +121,21 @@ def apply_rename_map(
                     f"Duplicate alias detected in rename_map: '{alias}'"
                 )
 
+            if alias in reverse_map:
+                raise SchemaValidationError(
+                    f"Alias '{alias}' mapped to multiple canonical names."
+                )
+
             reverse_map[alias] = canonical
             seen_aliases.add(alias)
 
     renamed = []
 
     for col in columns:
+        if not isinstance(col, str):
+            raise SchemaValidationError(
+                f"Column name must be string. Found: {type(col).__name__}"
+            )
         new_col = reverse_map.get(col, col)
         renamed.append(new_col)
 
@@ -135,10 +152,17 @@ def detect_duplicate_columns(columns: Iterable[str]) -> None:
     Detect duplicate column names after normalization and renaming.
     """
 
+    columns = list(columns)
+
     seen = set()
     duplicates = set()
 
     for col in columns:
+        if not isinstance(col, str):
+            raise SchemaValidationError(
+                f"Column name must be string. Found: {type(col).__name__}"
+            )
+
         if col in seen:
             duplicates.add(col)
         else:
@@ -166,6 +190,13 @@ def validate_required_columns(
     to configured schema policy.
     """
 
+    columns = list(columns)
+
+    if not isinstance(required_columns, Iterable):
+        raise SchemaValidationError(
+            "required_columns must be iterable."
+        )
+
     available = set(columns)
     required = set(required_columns)
 
@@ -186,6 +217,11 @@ def validate_required_columns(
         )
 
     if optional_columns is not None:
+
+        if not isinstance(optional_columns, Iterable):
+            raise SchemaValidationError(
+                "optional_columns must be iterable."
+            )
 
         optional = set(optional_columns)
         missing_optional = optional - available

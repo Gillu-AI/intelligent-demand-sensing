@@ -17,11 +17,13 @@ scikit-learn==1.4.2
 xgboost==2.0.3
 lightgbm==4.3.0
 shap==0.44.1
+pyarrow==15.0.2
 
 # ============================
 # Time Series
 # ============================
 prophet==1.1.5
+cmdstanpy==1.2.2
 
 # ============================
 # Utilities
