@@ -94,10 +94,10 @@ def _impute_numeric(series: pd.Series, strategy: str) -> pd.Series:
         return series.interpolate(method="linear")
 
     if strategy == "ffill":
-        return series.fillna(method="ffill")
+        return series.ffill()
 
     if strategy == "bfill":
-        return series.fillna(method="bfill")
+        return series.bfill()
 
     if strategy == "zero":
         return series.fillna(0)
@@ -188,6 +188,17 @@ def handle_missing_values(
 
     df = df.copy()
 
+    # ----------------------------------------------------------
+    # Enforce numeric dtype based on schema (industrial fix)
+    # ----------------------------------------------------------
+
+    schema_cfg = config.get("data_schema", {}).get(dataset_name, {})
+    required_cols = schema_cfg.get("required_columns", [])
+
+    for col in required_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
     for col in df.columns:
 
         if df[col].isna().sum() == 0:
@@ -210,9 +221,9 @@ def handle_missing_values(
 
             elif pd.api.types.is_datetime64_any_dtype(df[col]):
                 if strategy == "ffill":
-                    df[col] = df[col].fillna(method="ffill")
+                    df[col] = df[col].ffill()
                 elif strategy == "bfill":
-                    df[col] = df[col].fillna(method="bfill")
+                    df[col] = df[col].bfill()
                 elif strategy == "none":
                     pass
                 else:
@@ -249,10 +260,10 @@ def handle_missing_values(
             strategy = missing_config["datetime"]
 
             if strategy == "ffill":
-                df[col] = df[col].fillna(method="ffill")
+                df[col] = df[col].ffill()
 
             elif strategy == "bfill":
-                df[col] = df[col].fillna(method="bfill")
+                df[col] = df[col].bfill()
 
             elif strategy == "none":
                 pass
@@ -270,5 +281,42 @@ def handle_missing_values(
                 )
             strategy = missing_config["categorical"]
             df[col] = _impute_categorical(df[col], strategy)
+
+    return df
+
+
+def clean_dataframe(
+    df: pd.DataFrame,
+    config: Dict,
+    dataset_name: str
+) -> pd.DataFrame:
+    """
+    Apply duplicate handling and missing value handling
+    for a dataset based on config.
+    """
+
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("df must be a pandas DataFrame.")
+
+    if dataset_name not in config.get("data_cleaning", {}):
+        raise ValueError(
+            f"No cleaning configuration defined for dataset '{dataset_name}'."
+        )
+
+    cleaning_cfg = config["data_cleaning"][dataset_name]
+
+    duplicate_cfg = cleaning_cfg.get("duplicate", {})
+
+    df = handle_duplicates(
+        df=df,
+        unique_key=duplicate_cfg.get("unique_key"),
+        strategy=duplicate_cfg.get("strategy", "keep_first")
+    )
+
+    df = handle_missing_values(
+        df=df,
+        config=config,
+        dataset_name=dataset_name
+    )
 
     return df

@@ -3,9 +3,7 @@
 from typing import List
 import pandas as pd
 
-
 REQUIRED_COLUMNS = ["date"]
-
 
 def validate_datetime_column(df: pd.DataFrame, date_col: str) -> None:
     """
@@ -59,16 +57,17 @@ def add_time_features(
 
     df = df.copy()
 
-    all_features = {
-    "day_of_week": df[date_col].dt.weekday,
-    "is_weekend": (df[date_col].dt.weekday >= 5).astype(int),
-    "week_of_year": df[date_col].dt.isocalendar().week.astype(int),
-    "month": df[date_col].dt.month,
-    "quarter": df[date_col].dt.quarter,
-    "is_month_start": df[date_col].dt.is_month_start.astype(int),
-    "is_month_end": df[date_col].dt.is_month_end.astype(int),
-    }
+    iso_calendar = df[date_col].dt.isocalendar()
 
+    all_features = {
+        "day_of_week": df[date_col].dt.weekday.astype("Int64"),
+        "is_weekend": (df[date_col].dt.weekday >= 5).astype("Int64"),
+        "week_of_year": iso_calendar.week.astype("Int64"),
+        "month": df[date_col].dt.month.astype("Int64"),
+        "quarter": df[date_col].dt.quarter.astype("Int64"),
+        "is_month_start": df[date_col].dt.is_month_start.astype("Int64"),
+        "is_month_end": df[date_col].dt.is_month_end.astype("Int64"),
+    }
 
     selected_features = features or list(all_features.keys())
 

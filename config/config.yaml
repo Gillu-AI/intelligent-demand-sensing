@@ -283,7 +283,7 @@ data_cleaning:
 
     duplicate:
       unique_key: ["date"]
-      strategy: "keep_last"   # keep_first | keep_last | error | none
+      strategy: "keep_first"   # keep_first | keep_last | error | none
 
     missing:
       numeric: "interpolate"
@@ -312,7 +312,7 @@ modeling:
       enabled: true
     
     ridge:
-    enabled: true
+      enabled: true
 
     random_forest:
       enabled: true

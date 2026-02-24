@@ -1,1 +1,230 @@
 2026-02-18 20:15:16,873 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 16:29:24,154 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-23 16:29:25,681 | INFO | IDS | Loaded dataset: sales
+2026-02-23 16:29:25,681 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-23 16:29:25,682 | INFO | IDS | Profiling dataset...
+2026-02-23 16:29:25,687 | ERROR | IDS | Ingestion pipeline failed.
+Traceback (most recent call last):
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\pipelines\run_ingestion.py", line 125, in run_ingestion
+    profile_report.to_csv(profile_output_path, index=False)
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'to_csv'
+2026-02-23 16:37:03,917 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-23 16:37:04,381 | INFO | IDS | Loaded dataset: sales
+2026-02-23 16:37:04,381 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-23 16:37:04,382 | INFO | IDS | Profiling dataset...
+2026-02-23 16:37:04,406 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-23 16:37:04,407 | INFO | IDS | Applying duplicate and missing value handling...
+2026-02-23 16:37:04,418 | INFO | IDS | Cleaned dataset shape: (756, 4)
+2026-02-23 16:37:04,420 | INFO | IDS | Date column validated and dataset sorted chronologically.
+2026-02-23 16:37:04,634 | ERROR | IDS | Ingestion pipeline failed.
+Traceback (most recent call last):
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\pipelines\run_ingestion.py", line 209, in run_ingestion
+    df_cleaned.to_parquet(output_path, index=False)
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\core\frame.py", line 3101, in to_parquet
+    return to_parquet(
+           ^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\io\parquet.py", line 480, in to_parquet
+    impl.write(
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\io\parquet.py", line 190, in write
+    table = self.api.Table.from_pandas(df, **from_pandas_kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow\table.pxi", line 3874, in pyarrow.lib.Table.from_pandas
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 624, in dataframe_to_arrays
+    arrays[i] = maybe_fut.result()
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 598, in convert_column
+    raise e
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 592, in convert_column
+    result = pa.array(col, type=type_, from_pandas=True, safe=safe)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow\array.pxi", line 339, in pyarrow.lib.array
+  File "pyarrow\array.pxi", line 85, in pyarrow.lib._ndarray_to_array
+  File "pyarrow\error.pxi", line 91, in pyarrow.lib.check_status
+pyarrow.lib.ArrowInvalid: ("Could not convert 'Unknown' with type str: tried to convert to double", 'Conversion failed for column sales_closed with type object')
+2026-02-23 17:01:04,126 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-23 17:01:04,539 | INFO | IDS | Loaded dataset: sales
+2026-02-23 17:01:04,540 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-23 17:01:04,540 | INFO | IDS | Profiling dataset...
+2026-02-23 17:01:04,553 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-23 17:01:04,554 | INFO | IDS | Applying duplicate and missing value handling...
+2026-02-23 17:01:04,560 | INFO | IDS | Cleaned dataset shape: (756, 4)
+2026-02-23 17:01:04,563 | INFO | IDS | Date column validated and dataset sorted chronologically.
+2026-02-23 17:01:04,617 | INFO | IDS | Ingestion completed successfully.
+2026-02-23 17:01:04,618 | INFO | IDS | Cleaned dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-23 17:01:04,618 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-23 17:02:06,031 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-23 17:02:06,459 | INFO | IDS | Loaded dataset: sales
+2026-02-23 17:02:06,459 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-23 17:02:06,460 | INFO | IDS | Profiling dataset...
+2026-02-23 17:02:06,474 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-23 17:02:06,474 | INFO | IDS | Applying duplicate and missing value handling...
+2026-02-23 17:02:06,478 | INFO | IDS | Cleaned dataset shape: (756, 4)
+2026-02-23 17:02:06,479 | INFO | IDS | Date column validated and dataset sorted chronologically.
+2026-02-23 17:02:06,538 | INFO | IDS | Ingestion completed successfully.
+2026-02-23 17:02:06,538 | INFO | IDS | Cleaned dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-23 17:02:06,538 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-23 17:04:01,613 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:04:01,930 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:04:01,930 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:04:01,932 | INFO | IDS | Applying time features.
+2026-02-23 17:10:24,245 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:10:24,340 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:10:24,341 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:10:24,343 | INFO | IDS | Applying time features.
+2026-02-23 17:13:21,836 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:13:21,947 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:13:21,947 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:13:21,950 | INFO | IDS | Applying time features.
+2026-02-23 17:13:21,958 | INFO | IDS | Applying lag features.
+2026-02-23 17:17:56,871 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:17:56,965 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:17:56,965 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:17:56,967 | INFO | IDS | Applying time features.
+2026-02-23 17:17:56,974 | INFO | IDS | Applying lag features.
+2026-02-23 17:23:41,665 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:23:41,772 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:23:41,773 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:23:41,776 | INFO | IDS | Applying time features.
+2026-02-23 17:23:41,784 | INFO | IDS | Applying lag features.
+2026-02-23 17:28:36,397 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-23 17:28:36,804 | INFO | IDS | Loaded dataset: sales
+2026-02-23 17:28:36,805 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-23 17:28:36,805 | INFO | IDS | Profiling dataset...
+2026-02-23 17:28:36,818 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-23 17:28:36,818 | INFO | IDS | Applying duplicate and missing value handling...
+2026-02-23 17:28:36,823 | INFO | IDS | Cleaned dataset shape: (756, 4)
+2026-02-23 17:28:36,824 | INFO | IDS | Date column validated and dataset sorted chronologically.
+2026-02-23 17:28:36,897 | INFO | IDS | Ingestion completed successfully.
+2026-02-23 17:28:36,898 | INFO | IDS | Cleaned dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-23 17:28:36,898 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-23 17:28:51,689 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:28:51,785 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:28:51,785 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:28:51,787 | INFO | IDS | Applying time features.
+2026-02-23 17:28:51,795 | INFO | IDS | Applying lag features.
+2026-02-23 17:32:43,958 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:32:44,059 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:32:44,060 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:32:44,062 | INFO | IDS | Applying time features.
+2026-02-23 17:32:44,068 | INFO | IDS | Applying lag features.
+2026-02-23 17:34:45,274 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:34:45,372 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:34:45,372 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:34:45,374 | INFO | IDS | Dataframe sorted by date.
+2026-02-23 17:34:45,375 | INFO | IDS | Applying time features.
+2026-02-23 17:34:45,382 | INFO | IDS | Applying lag features.
+2026-02-23 17:36:35,715 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:36:35,810 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:36:35,811 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:36:35,812 | INFO | IDS | Applying time features.
+2026-02-23 17:36:35,818 | INFO | IDS | Applying lag features.
+2026-02-23 17:36:57,882 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:36:57,970 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:36:57,970 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:36:57,973 | INFO | IDS | Applying time features.
+2026-02-23 17:36:57,979 | INFO | IDS | Applying lag features.
+2026-02-23 17:39:32,219 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:39:32,326 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:39:32,326 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:39:32,328 | INFO | IDS | Applying time features.
+2026-02-23 17:39:32,335 | INFO | IDS | Applying lag features.
+2026-02-23 17:42:33,467 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-23 17:42:33,568 | INFO | IDS | Loaded cleaned dataset:cleaned_sales.parquet
+2026-02-23 17:42:33,568 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-23 17:42:33,570 | INFO | IDS | Applying time features.
+2026-02-23 17:42:33,576 | INFO | IDS | Applying lag features.
+2026-02-23 17:42:33,579 | INFO | IDS | Applying rolling features.
+2026-02-24 13:39:02,851 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 13:39:04,351 | INFO | IDS | Loaded dataset: sales
+2026-02-24 13:39:04,351 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 13:39:04,351 | INFO | IDS | Profiling dataset...
+2026-02-24 13:39:04,372 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 13:39:04,372 | INFO | IDS | Applying duplicate and missing value handling...
+2026-02-24 13:39:04,386 | INFO | IDS | Cleaned dataset shape: (756, 4)
+2026-02-24 13:39:04,389 | INFO | IDS | Date column validated and dataset sorted chronologically.
+2026-02-24 13:39:04,493 | INFO | IDS | Ingestion completed successfully.
+2026-02-24 13:39:04,493 | INFO | IDS | Cleaned dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 13:39:04,493 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 13:39:18,083 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 13:39:18,084 | INFO | IDS | Loading datasets via universal loader.
+2026-02-24 13:39:18,714 | INFO | IDS | Sales dataset loaded successfully.
+2026-02-24 13:39:18,714 | INFO | IDS | Dataset shape: (777, 4)
+2026-02-24 13:39:18,716 | INFO | IDS | Applying time features.
+2026-02-24 13:39:18,726 | INFO | IDS | Applying lag features.
+2026-02-24 13:39:18,733 | INFO | IDS | Applying rolling features.
+2026-02-24 13:39:18,739 | INFO | IDS | Merging calendar features.
+2026-02-24 13:42:01,578 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 13:42:01,578 | INFO | IDS | Loading datasets via universal loader.
+2026-02-24 13:42:02,173 | INFO | IDS | Sales dataset loaded successfully.
+2026-02-24 13:42:02,173 | INFO | IDS | Dataset shape: (777, 4)
+2026-02-24 13:42:02,176 | INFO | IDS | Applying time features.
+2026-02-24 13:42:02,185 | INFO | IDS | Applying lag features.
+2026-02-24 13:42:02,189 | INFO | IDS | Applying rolling features.
+2026-02-24 13:42:02,202 | INFO | IDS | Merging calendar features.
+2026-02-24 13:42:02,230 | INFO | IDS | Applying same weekday aggregation.
+2026-02-24 13:42:02,235 | INFO | IDS | Applying demand bucketing.
+2026-02-24 13:42:02,239 | INFO | IDS | Dropping first 30 rows due to lag history.
+2026-02-24 13:46:39,675 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 13:46:39,675 | INFO | IDS | Loading datasets via universal loader.
+2026-02-24 13:46:40,195 | INFO | IDS | Sales dataset loaded successfully.
+2026-02-24 13:46:40,196 | INFO | IDS | Dataset shape: (777, 4)
+2026-02-24 13:46:40,198 | INFO | IDS | Applying time features.
+2026-02-24 13:46:40,207 | INFO | IDS | Applying lag features.
+2026-02-24 13:46:40,211 | INFO | IDS | Applying rolling features.
+2026-02-24 13:46:40,219 | INFO | IDS | Merging calendar features.
+2026-02-24 13:46:40,283 | INFO | IDS | Applying same weekday aggregation.
+2026-02-24 13:46:40,290 | INFO | IDS | Applying demand bucketing.
+2026-02-24 13:46:40,294 | INFO | IDS | Dropping first 30 rows due to lag history.
+2026-02-24 13:46:40,315 | INFO | IDS | Feature validation passed. No missing values detected.
+2026-02-24 13:46:40,397 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 13:46:40,397 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 13:56:27,947 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 13:56:28,402 | INFO | IDS | Loaded dataset: sales
+2026-02-24 13:56:28,403 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 13:56:28,403 | INFO | IDS | Profiling dataset...
+2026-02-24 13:56:28,420 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 13:56:28,420 | INFO | IDS | Applying duplicate and missing value handling...
+2026-02-24 13:56:28,426 | INFO | IDS | Cleaned dataset shape: (756, 4)
+2026-02-24 13:56:28,430 | INFO | IDS | Date column validated and dataset sorted chronologically.
+2026-02-24 13:56:28,503 | INFO | IDS | Ingestion completed successfully.
+2026-02-24 13:56:28,504 | INFO | IDS | Cleaned dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 13:56:28,504 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 13:58:32,723 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 13:58:32,855 | INFO | IDS | Loaded cleaned dataset: cleaned_sales.parquet
+2026-02-24 13:58:32,856 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-24 14:03:31,129 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 14:03:31,679 | INFO | IDS | Loaded dataset: sales
+2026-02-24 14:03:31,679 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 14:03:31,680 | INFO | IDS | Profiling sales dataset...
+2026-02-24 14:03:31,694 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 14:03:31,695 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 14:03:31,774 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 14:03:31,775 | INFO | IDS | Processing calendar dataset...
+2026-02-24 14:03:31,803 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 14:03:31,803 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 14:03:38,905 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 14:03:39,003 | INFO | IDS | Loaded cleaned dataset: cleaned_sales.parquet
+2026-02-24 14:03:39,003 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-24 14:03:39,012 | INFO | IDS | Loaded cleaned calendar dataset.
+2026-02-24 14:03:39,012 | INFO | IDS | Applying time features.
+2026-02-24 14:03:39,020 | INFO | IDS | Applying lag features.
+2026-02-24 14:03:39,028 | INFO | IDS | Applying rolling features.
+2026-02-24 14:03:39,036 | INFO | IDS | Merging calendar features.
+2026-02-24 14:03:39,050 | INFO | IDS | Applying same weekday aggregation.
+2026-02-24 14:03:39,055 | INFO | IDS | Applying demand bucketing.
+2026-02-24 14:03:39,058 | INFO | IDS | Dropping first 30 rows due to lag history.
+2026-02-24 14:03:39,061 | INFO | IDS | Feature validation passed. No missing values detected.
+2026-02-24 14:03:39,083 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 14:03:39,084 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
