@@ -273,7 +273,6 @@ features:
     method: "quantile"
     labels: ["Low", "Medium", "High"]
 
-
 # =====================================================================
 # Data Cleaning Rules
 # =====================================================================
@@ -281,16 +280,34 @@ data_cleaning:
 
   sales:
 
+    # ---------------------------------------------------
+    # Duplicate Handling
+    # ---------------------------------------------------
     duplicate:
       unique_key: ["date"]
       strategy: "keep_first"   # keep_first | keep_last | error | none
 
+    # ---------------------------------------------------
+    # Structural Integrity Enforcement
+    # These columns MUST NOT contain missing values.
+    # Rows missing these columns will be dropped.
+    # ---------------------------------------------------
+    critical_columns:
+      - date
+      - total_sales
+
+    # ---------------------------------------------------
+    # Global Missing Value Strategy (Post Critical Drop)
+    # ---------------------------------------------------
     missing:
       numeric: "interpolate"
       categorical: "unknown"
       boolean: "mode"
       datetime: "none"
 
+    # ---------------------------------------------------
+    # Column-Specific Overrides
+    # ---------------------------------------------------
     per_column:
       total_sales: "ffill"
 
@@ -302,7 +319,7 @@ modeling:
 
   train_test_split:
     method: "time"
-    test_days: 90
+    test_days: 3
 
   forecast_horizon_days: 365
 

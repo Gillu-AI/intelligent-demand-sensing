@@ -228,3 +228,1690 @@ pyarrow.lib.ArrowInvalid: ("Could not convert 'Unknown' with type str: tried to 
 2026-02-24 14:03:39,061 | INFO | IDS | Feature validation passed. No missing values detected.
 2026-02-24 14:03:39,083 | INFO | IDS | Feature engineering completed successfully.
 2026-02-24 14:03:39,084 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 18:04:57,342 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 18:04:57,756 | INFO | IDS | Loaded dataset: sales
+2026-02-24 18:04:57,756 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 18:04:57,756 | INFO | IDS | Profiling sales dataset...
+2026-02-24 18:04:57,771 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 18:04:57,771 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 18:04:57,840 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 18:04:57,841 | INFO | IDS | Processing calendar dataset...
+2026-02-24 18:04:57,864 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 18:04:57,864 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 18:05:12,189 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 18:05:12,291 | INFO | IDS | Loaded cleaned dataset: cleaned_sales.parquet
+2026-02-24 18:05:12,291 | INFO | IDS | Dataset shape: (756, 4)
+2026-02-24 18:05:12,300 | INFO | IDS | Loaded cleaned calendar dataset.
+2026-02-24 18:05:12,300 | INFO | IDS | Applying time features.
+2026-02-24 18:05:12,307 | INFO | IDS | Applying lag features.
+2026-02-24 18:05:12,312 | INFO | IDS | Applying rolling features.
+2026-02-24 18:05:12,321 | INFO | IDS | Merging calendar features.
+2026-02-24 18:05:12,344 | INFO | IDS | Applying same weekday aggregation.
+2026-02-24 18:05:12,351 | INFO | IDS | Applying demand bucketing.
+2026-02-24 18:05:12,354 | INFO | IDS | Dropping first 30 rows due to lag history.
+2026-02-24 18:05:12,361 | INFO | IDS | Feature validation passed. No missing values detected.
+2026-02-24 18:05:12,372 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 18:05:12,373 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 18:17:52,567 | INFO | IDS | Starting training pipeline.
+2026-02-24 18:17:52,568 | INFO | IDS | Global random seed set to 42.
+2026-02-24 18:23:06,383 | INFO | IDS | Starting training pipeline.
+2026-02-24 18:23:06,383 | INFO | IDS | Global random seed set to 42.
+2026-02-24 18:40:11,655 | INFO | IDS | Starting training pipeline.
+2026-02-24 18:40:11,655 | INFO | IDS | Global random seed set to 42.
+2026-02-24 18:41:07,055 | INFO | IDS | Training pipeline completed successfully.
+2026-02-24 18:49:21,335 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 18:49:21,748 | INFO | IDS | Loaded dataset: sales
+2026-02-24 18:49:21,748 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 18:49:21,748 | INFO | IDS | Profiling sales dataset...
+2026-02-24 18:49:21,778 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 18:49:21,779 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 18:49:21,868 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 18:49:21,868 | INFO | IDS | Processing calendar dataset...
+2026-02-24 18:49:21,894 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 18:49:21,894 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 18:56:28,742 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 18:56:28,881 | INFO | IDS | Initial dataset shape: (756, 4)
+2026-02-24 18:56:28,890 | INFO | IDS | Calendar dataset shape: (4018, 6)
+2026-02-24 18:56:28,899 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+NA Cnt : 5
+Const Cols : 0
+--------------------------------------------------
+2026-02-24 18:56:28,930 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+NA Cnt : 57
+Const Cols : 0
+--------------------------------------------------
+2026-02-24 18:56:28,946 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+NA Cnt : 159
+Const Cols : 0
+--------------------------------------------------
+2026-02-24 18:56:28,980 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+NA Cnt : 900
+Const Cols : 0
+--------------------------------------------------
+2026-02-24 18:56:28,994 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+NA Cnt : 923
+Const Cols : 0
+--------------------------------------------------
+2026-02-24 18:56:29,006 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+NA Cnt : 923
+Const Cols : 0
+--------------------------------------------------
+2026-02-24 18:56:29,011 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 756 → 726
+Row Δ  : -30
+Row %  : -3.97%
+Cols   : 26 → 26
+Col Δ  : 0
+NA Cnt : 719
+Const Cols : 0
+--------------------------------------------------
+2026-02-24 18:56:29,017 | INFO | IDS | 
+[STEP: dropna_final]
+Rows   : 726 → 13
+Row Δ  : -713
+Row %  : -98.21%
+Cols   : 26 → 26
+Col Δ  : 0
+NA Cnt : 0
+Const Cols : 3
+--------------------------------------------------
+2026-02-24 18:56:29,018 | WARNING | IDS | CRITICAL: >80% row loss detected at step 'dropna_final'.
+2026-02-24 18:56:29,036 | INFO | IDS | Final model_ready shape: (13, 26)
+2026-02-24 18:56:29,044 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 18:56:29,044 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 20:43:14,545 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 20:43:16,009 | INFO | IDS | Loaded dataset: sales
+2026-02-24 20:43:16,010 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 20:43:16,010 | INFO | IDS | Profiling sales dataset...
+2026-02-24 20:43:16,030 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 20:43:16,030 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 20:43:16,121 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 20:43:16,121 | INFO | IDS | Processing calendar dataset...
+2026-02-24 20:43:16,148 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 20:43:16,149 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 20:43:26,469 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 20:43:26,618 | INFO | IDS | Initial dataset shape: (756, 4)
+2026-02-24 20:43:26,618 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 20:43:26,620 | INFO | IDS | Total Rows: 756
+2026-02-24 20:43:26,620 | INFO | IDS | Duplicate Rows: 0
+2026-02-24 20:43:26,621 | INFO | IDS | Total Columns: 4
+2026-02-24 20:43:26,621 | INFO | IDS | --------------------------------------------------
+2026-02-24 20:43:26,622 | INFO | IDS | Column: date | Type: datetime64[ns] | Missing: 1 (0.13%) | Unique: 756 | Constant: False
+2026-02-24 20:43:26,623 | INFO | IDS | Column: sales_closed | Type: float64 | Missing: 0 (0.00%) | Unique: 508 | Constant: False
+2026-02-24 20:43:26,623 | INFO | IDS | Column: sales_open | Type: float64 | Missing: 0 (0.00%) | Unique: 669 | Constant: False
+2026-02-24 20:43:26,624 | INFO | IDS | Column: total_sales | Type: float64 | Missing: 0 (0.00%) | Unique: 543 | Constant: False
+2026-02-24 20:43:26,624 | INFO | IDS | ==================================================
+
+2026-02-24 20:43:26,634 | INFO | IDS | Calendar dataset shape: (4018, 6)
+2026-02-24 20:43:26,634 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: calendar_dataset ==========
+2026-02-24 20:43:26,637 | INFO | IDS | Total Rows: 4018
+2026-02-24 20:43:26,638 | INFO | IDS | Duplicate Rows: 0
+2026-02-24 20:43:26,638 | INFO | IDS | Total Columns: 6
+2026-02-24 20:43:26,638 | INFO | IDS | --------------------------------------------------
+2026-02-24 20:43:26,640 | INFO | IDS | Column: date | Type: datetime64[ns] | Missing: 0 (0.00%) | Unique: 4018 | Constant: False
+2026-02-24 20:43:26,642 | INFO | IDS | Column: day | Type: object | Missing: 0 (0.00%) | Unique: 7 | Constant: False
+2026-02-24 20:43:26,644 | INFO | IDS | Column: is_festival | Type: float64 | Missing: 3928 (97.76%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,644 | WARNING | IDS | WARNING: Column 'is_festival' has >30% missing values.
+2026-02-24 20:43:26,645 | INFO | IDS | Column: festival_name | Type: object | Missing: 3928 (97.76%) | Unique: 21 | Constant: False
+2026-02-24 20:43:26,645 | WARNING | IDS | WARNING: Column 'festival_name' has >30% missing values.
+2026-02-24 20:43:26,646 | INFO | IDS | Column: weekdayweekend | Type: object | Missing: 0 (0.00%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,650 | INFO | IDS | Column: is_holiday | Type: int64 | Missing: 0 (0.00%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,650 | INFO | IDS | ==================================================
+
+2026-02-24 20:43:26,678 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 20:43:26,684 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 20:43:26,722 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 20:43:26,740 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 20:43:26,750 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 20:43:26,775 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 20:43:26,777 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 756 → 726
+Row Δ  : -30
+Row %  : -3.97%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 20:43:26,787 | INFO | IDS | 
+[STEP: controlled_na_handling]
+Rows   : 726 → 726
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 20:43:26,789 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: final_model_ready ==========
+2026-02-24 20:43:26,808 | INFO | IDS | Total Rows: 726
+2026-02-24 20:43:26,808 | INFO | IDS | Duplicate Rows: 0
+2026-02-24 20:43:26,809 | INFO | IDS | Total Columns: 26
+2026-02-24 20:43:26,809 | INFO | IDS | --------------------------------------------------
+2026-02-24 20:43:26,810 | INFO | IDS | Column: date | Type: datetime64[ns] | Missing: 1 (0.14%) | Unique: 726 | Constant: False
+2026-02-24 20:43:26,811 | INFO | IDS | Column: sales_closed | Type: float64 | Missing: 0 (0.00%) | Unique: 487 | Constant: False
+2026-02-24 20:43:26,811 | INFO | IDS | Column: sales_open | Type: float64 | Missing: 0 (0.00%) | Unique: 643 | Constant: False
+2026-02-24 20:43:26,812 | INFO | IDS | Column: total_sales | Type: float64 | Missing: 0 (0.00%) | Unique: 518 | Constant: False
+2026-02-24 20:43:26,818 | INFO | IDS | Column: day_of_week | Type: Int64 | Missing: 0 (0.00%) | Unique: 7 | Constant: False
+2026-02-24 20:43:26,832 | INFO | IDS | Column: is_weekend | Type: Int64 | Missing: 0 (0.00%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,833 | INFO | IDS | Column: week_of_year | Type: Int64 | Missing: 0 (0.00%) | Unique: 53 | Constant: False
+2026-02-24 20:43:26,834 | INFO | IDS | Column: month | Type: Int64 | Missing: 0 (0.00%) | Unique: 13 | Constant: False
+2026-02-24 20:43:26,835 | INFO | IDS | Column: quarter | Type: Int64 | Missing: 0 (0.00%) | Unique: 5 | Constant: False
+2026-02-24 20:43:26,835 | INFO | IDS | Column: is_month_start | Type: Int64 | Missing: 0 (0.00%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,836 | INFO | IDS | Column: is_month_end | Type: Int64 | Missing: 0 (0.00%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,838 | INFO | IDS | Column: total_sales_lag_1 | Type: float64 | Missing: 0 (0.00%) | Unique: 518 | Constant: False
+2026-02-24 20:43:26,841 | INFO | IDS | Column: total_sales_lag_7 | Type: float64 | Missing: 0 (0.00%) | Unique: 522 | Constant: False
+2026-02-24 20:43:26,843 | INFO | IDS | Column: total_sales_lag_14 | Type: float64 | Missing: 0 (0.00%) | Unique: 526 | Constant: False
+2026-02-24 20:43:26,848 | INFO | IDS | Column: total_sales_lag_30 | Type: float64 | Missing: 0 (0.00%) | Unique: 532 | Constant: False
+2026-02-24 20:43:26,849 | INFO | IDS | Column: total_sales_rolling_mean_7 | Type: float64 | Missing: 0 (0.00%) | Unique: 677 | Constant: False
+2026-02-24 20:43:26,850 | INFO | IDS | Column: total_sales_rolling_std_7 | Type: float64 | Missing: 0 (0.00%) | Unique: 672 | Constant: False
+2026-02-24 20:43:26,854 | INFO | IDS | Column: total_sales_rolling_mean_14 | Type: float64 | Missing: 0 (0.00%) | Unique: 710 | Constant: False
+2026-02-24 20:43:26,872 | INFO | IDS | Column: total_sales_rolling_std_14 | Type: float64 | Missing: 0 (0.00%) | Unique: 713 | Constant: False
+2026-02-24 20:43:26,877 | INFO | IDS | Column: total_sales_rolling_mean_30 | Type: float64 | Missing: 0 (0.00%) | Unique: 715 | Constant: False
+2026-02-24 20:43:26,879 | INFO | IDS | Column: total_sales_rolling_std_30 | Type: float64 | Missing: 0 (0.00%) | Unique: 719 | Constant: False
+2026-02-24 20:43:26,881 | INFO | IDS | Column: is_holiday | Type: int32 | Missing: 0 (0.00%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,883 | INFO | IDS | Column: is_festival | Type: int32 | Missing: 0 (0.00%) | Unique: 2 | Constant: False
+2026-02-24 20:43:26,884 | INFO | IDS | Column: festival_name | Type: object | Missing: 0 (0.00%) | Unique: 8 | Constant: False
+2026-02-24 20:43:26,888 | INFO | IDS | Column: avg_sales_same_weekday | Type: float64 | Missing: 0 (0.00%) | Unique: 698 | Constant: False
+2026-02-24 20:43:26,904 | INFO | IDS | Column: demand_class | Type: category | Missing: 0 (0.00%) | Unique: 3 | Constant: False
+2026-02-24 20:43:26,913 | INFO | IDS | ==================================================
+
+2026-02-24 20:43:26,959 | INFO | IDS | Final model_ready shape: (726, 26)
+2026-02-24 20:43:26,960 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 20:43:26,961 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 21:03:05,704 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 21:03:06,120 | INFO | IDS | Loaded dataset: sales
+2026-02-24 21:03:06,121 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 21:03:06,121 | INFO | IDS | Profiling sales dataset...
+2026-02-24 21:03:06,134 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 21:03:06,134 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 21:03:06,209 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 21:03:06,209 | INFO | IDS | Processing calendar dataset...
+2026-02-24 21:03:06,263 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 21:03:06,263 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 21:03:12,559 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 21:03:12,660 | INFO | IDS | Initial dataset shape: (756, 4)
+2026-02-24 21:03:12,661 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 21:03:12,662 | WARNING | IDS | Missing rows detected in column 'date'. Count: 1. First 1 row indices: [755]
+2026-02-24 21:03:12,671 | INFO | IDS | 
+Total Rows     : 756
+2026-02-24 21:03:12,671 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 21:03:12,672 | INFO | IDS | 
+Column Summary:
+column       dtype           missing_count  missing_%  unique_values  constant
+        date datetime64[ns] 1              0.13       756            False    
+sales_closed        float64 0              0.00       508            False    
+  sales_open        float64 0              0.00       669            False    
+ total_sales        float64 0              0.00       543            False    
+2026-02-24 21:03:12,672 | INFO | IDS | ==================================================
+
+2026-02-24 21:03:12,696 | INFO | IDS | Calendar dataset shape: (4018, 6)
+2026-02-24 21:03:12,696 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: calendar_dataset ==========
+2026-02-24 21:03:12,700 | WARNING | IDS | Missing rows detected in column 'is_festival'. Count: 3928. First 50 row indices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53]
+2026-02-24 21:03:12,701 | WARNING | IDS | Missing rows detected in column 'festival_name'. Count: 3928. First 50 row indices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53]
+2026-02-24 21:03:12,705 | INFO | IDS | 
+Total Rows     : 4018
+2026-02-24 21:03:12,706 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 21:03:12,706 | INFO | IDS | 
+Column Summary:
+column         dtype           missing_count  missing_%  unique_values  constant
+          date datetime64[ns]    0            0.00      4018           False    
+           day         object    0            0.00         7           False    
+   is_festival        float64 3928           97.76         2           False    
+ festival_name         object 3928           97.76        21           False    
+weekdayweekend         object    0            0.00         2           False    
+    is_holiday          int64    0            0.00         2           False    
+2026-02-24 21:03:12,707 | INFO | IDS | ==================================================
+
+2026-02-24 21:03:12,713 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 21:03:12,717 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 21:03:12,722 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 21:03:12,744 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 21:03:12,759 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 21:03:12,762 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 756 → 756
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 21:03:12,763 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 756 → 726
+Row Δ  : -30
+Row %  : -3.97%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 21:03:12,773 | INFO | IDS | 
+[STEP: controlled_na_handling]
+Rows   : 726 → 726
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 21:03:12,773 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: final_model_ready ==========
+2026-02-24 21:03:12,777 | WARNING | IDS | Missing rows detected in column 'date'. Count: 1. First 1 row indices: [725]
+2026-02-24 21:03:12,795 | INFO | IDS | 
+Total Rows     : 726
+2026-02-24 21:03:12,799 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 21:03:12,800 | INFO | IDS | 
+Column Summary:
+column                      dtype           missing_count  missing_%  unique_values  constant
+                       date datetime64[ns] 1              0.14       726            False    
+               sales_closed        float64 0              0.00       487            False    
+                 sales_open        float64 0              0.00       643            False    
+                total_sales        float64 0              0.00       518            False    
+                day_of_week          Int64 0              0.00         7            False    
+                 is_weekend          Int64 0              0.00         2            False    
+               week_of_year          Int64 0              0.00        53            False    
+                      month          Int64 0              0.00        13            False    
+                    quarter          Int64 0              0.00         5            False    
+             is_month_start          Int64 0              0.00         2            False    
+               is_month_end          Int64 0              0.00         2            False    
+          total_sales_lag_1        float64 0              0.00       518            False    
+          total_sales_lag_7        float64 0              0.00       522            False    
+         total_sales_lag_14        float64 0              0.00       526            False    
+         total_sales_lag_30        float64 0              0.00       532            False    
+ total_sales_rolling_mean_7        float64 0              0.00       677            False    
+  total_sales_rolling_std_7        float64 0              0.00       672            False    
+total_sales_rolling_mean_14        float64 0              0.00       710            False    
+ total_sales_rolling_std_14        float64 0              0.00       713            False    
+total_sales_rolling_mean_30        float64 0              0.00       715            False    
+ total_sales_rolling_std_30        float64 0              0.00       719            False    
+                 is_holiday          int32 0              0.00         2            False    
+                is_festival          int32 0              0.00         2            False    
+              festival_name         object 0              0.00         8            False    
+     avg_sales_same_weekday        float64 0              0.00       698            False    
+               demand_class       category 0              0.00         3            False    
+2026-02-24 21:03:12,800 | INFO | IDS | ==================================================
+
+2026-02-24 21:03:12,815 | INFO | IDS | Final model_ready shape: (726, 26)
+2026-02-24 21:03:12,815 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 21:03:12,816 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 21:15:37,100 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 21:15:37,573 | INFO | IDS | Loaded dataset: sales
+2026-02-24 21:15:37,573 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 21:15:37,574 | INFO | IDS | Profiling sales dataset...
+2026-02-24 21:15:37,592 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 21:15:37,592 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 21:15:37,694 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 21:15:37,695 | INFO | IDS | Processing calendar dataset...
+2026-02-24 21:15:37,720 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 21:15:37,720 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 21:15:47,036 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 21:15:47,187 | INFO | IDS | Initial dataset shape: (756, 4)
+2026-02-24 21:15:47,187 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 21:15:47,193 | WARNING | IDS | Missing rows in column 'date' | Count: 1 | First 1 row indices: [755]
+2026-02-24 21:15:47,196 | INFO | IDS | 
+Total Rows     : 756
+2026-02-24 21:15:47,196 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 21:15:47,197 | INFO | IDS | 
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| Column       | DType          |   Missing Count | Missing %   |   Unique Values | Constant   |
++==============+================+=================+=============+=================+============+
+| date         | datetime64[ns] |               1 | 0.13%       |             756 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| sales_closed | float64        |               0 | 0.00%       |             508 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| sales_open   | float64        |               0 | 0.00%       |             669 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| total_sales  | float64        |               0 | 0.00%       |             543 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+2026-02-24 21:15:47,197 | INFO | IDS | ==================================================
+
+2026-02-24 21:19:47,360 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 21:19:47,870 | INFO | IDS | Loaded dataset: sales
+2026-02-24 21:19:47,870 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 21:19:47,870 | INFO | IDS | Profiling sales dataset...
+2026-02-24 21:19:47,885 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 21:19:47,886 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 21:19:47,986 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 21:19:47,986 | INFO | IDS | Processing calendar dataset...
+2026-02-24 21:19:48,029 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 21:19:48,029 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 21:20:09,421 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 21:20:09,573 | INFO | IDS | Initial dataset shape: (756, 4)
+2026-02-24 21:20:09,574 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 21:20:09,577 | WARNING | IDS | Missing rows in column 'date' | Count: 1 | First 1 row indices: [755]
+2026-02-24 21:20:09,580 | INFO | IDS | 
+Total Rows     : 756
+2026-02-24 21:20:09,580 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 21:20:09,581 | INFO | IDS | 
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| Column       | DType          |   Missing Count | Missing %   |   Unique Values | Constant   |
++==============+================+=================+=============+=================+============+
+| date         | datetime64[ns] |               1 | 0.13%       |             756 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| sales_closed | float64        |               0 | 0.00%       |             508 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| sales_open   | float64        |               0 | 0.00%       |             669 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| total_sales  | float64        |               0 | 0.00%       |             543 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+2026-02-24 21:20:09,581 | INFO | IDS | ==================================================
+
+2026-02-24 21:43:00,302 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 21:43:00,860 | INFO | IDS | Loaded dataset: sales
+2026-02-24 21:43:00,860 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 21:43:00,861 | INFO | IDS | Profiling sales dataset...
+2026-02-24 21:43:00,885 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 21:43:00,887 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 21:43:00,903 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 21:43:00,903 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             20 |
++----------------------+----------------+
+| Missing Date         |             22 |
++----------------------+----------------+
+| Missing Target       |            154 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 21:43:00,904 | INFO | IDS | 
+Total Rows Removed: 21
+2026-02-24 21:43:00,904 | INFO | IDS | ====================================================
+
+2026-02-24 21:43:00,906 | ERROR | IDS | Ingestion pipeline failed.
+Traceback (most recent call last):
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\pipelines\run_ingestion.py", line 205, in run_ingestion
+    raise ValueError("Date column contains missing values after cleaning.")
+ValueError: Date column contains missing values after cleaning.
+2026-02-24 21:56:42,329 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 21:56:42,754 | INFO | IDS | Loaded dataset: sales
+2026-02-24 21:56:42,754 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 21:56:42,754 | INFO | IDS | Profiling sales dataset...
+2026-02-24 21:56:42,765 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 21:56:42,768 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 21:56:42,784 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 21:56:42,784 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             20 |
++----------------------+----------------+
+| Missing Date         |             22 |
++----------------------+----------------+
+| Missing Target       |            154 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 21:56:42,785 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 21:56:42,785 | INFO | IDS | ====================================================
+
+2026-02-24 21:56:42,850 | ERROR | IDS | Ingestion pipeline failed.
+Traceback (most recent call last):
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\pipelines\run_ingestion.py", line 222, in run_ingestion
+    sales_cleaned.to_parquet(sales_output_path, index=False)
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\core\frame.py", line 3101, in to_parquet
+    return to_parquet(
+           ^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\io\parquet.py", line 480, in to_parquet
+    impl.write(
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\io\parquet.py", line 190, in write
+    table = self.api.Table.from_pandas(df, **from_pandas_kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow\table.pxi", line 3874, in pyarrow.lib.Table.from_pandas
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 624, in dataframe_to_arrays
+    arrays[i] = maybe_fut.result()
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 598, in convert_column
+    raise e
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 592, in convert_column
+    result = pa.array(col, type=type_, from_pandas=True, safe=safe)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow\array.pxi", line 339, in pyarrow.lib.array
+  File "pyarrow\array.pxi", line 85, in pyarrow.lib._ndarray_to_array
+  File "pyarrow\error.pxi", line 91, in pyarrow.lib.check_status
+pyarrow.lib.ArrowInvalid: ("Could not convert 'Unknown' with type str: tried to convert to double", 'Conversion failed for column sales_closed with type object')
+2026-02-24 22:10:38,660 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 22:10:39,126 | INFO | IDS | Loaded dataset: sales
+2026-02-24 22:10:39,126 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 22:10:39,126 | INFO | IDS | Profiling sales dataset...
+2026-02-24 22:10:39,135 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 22:10:39,136 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 22:10:39,145 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 22:10:39,145 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             20 |
++----------------------+----------------+
+| Missing Date         |             22 |
++----------------------+----------------+
+| Missing Target       |            154 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 22:10:39,150 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 22:10:39,151 | INFO | IDS | ====================================================
+
+2026-02-24 22:10:39,239 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 22:10:39,240 | INFO | IDS | Processing calendar dataset...
+2026-02-24 22:10:39,272 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 22:10:39,273 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 22:22:58,228 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 22:22:58,750 | INFO | IDS | Loaded dataset: sales
+2026-02-24 22:22:58,750 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 22:22:58,750 | INFO | IDS | Profiling sales dataset...
+2026-02-24 22:22:58,763 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 22:22:58,764 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 22:22:58,778 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 22:22:58,779 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             20 |
++----------------------+----------------+
+| Missing Date         |             22 |
++----------------------+----------------+
+| Missing Target       |            154 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 22:22:58,779 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 22:22:58,780 | INFO | IDS | ====================================================
+
+2026-02-24 22:22:58,891 | ERROR | IDS | Ingestion pipeline failed.
+Traceback (most recent call last):
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\pipelines\run_ingestion.py", line 331, in run_ingestion
+    sales_cleaned.to_parquet(sales_output_path, index=False)
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\core\frame.py", line 3101, in to_parquet
+    return to_parquet(
+           ^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\io\parquet.py", line 480, in to_parquet
+    impl.write(
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pandas\io\parquet.py", line 190, in write
+    table = self.api.Table.from_pandas(df, **from_pandas_kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow\table.pxi", line 3874, in pyarrow.lib.Table.from_pandas
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 624, in dataframe_to_arrays
+    arrays[i] = maybe_fut.result()
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 598, in convert_column
+    raise e
+  File "C:\Users\KarthigeyanS\miniconda3\envs\ids_env\Lib\site-packages\pyarrow\pandas_compat.py", line 592, in convert_column
+    result = pa.array(col, type=type_, from_pandas=True, safe=safe)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow\array.pxi", line 339, in pyarrow.lib.array
+  File "pyarrow\array.pxi", line 85, in pyarrow.lib._ndarray_to_array
+  File "pyarrow\error.pxi", line 91, in pyarrow.lib.check_status
+pyarrow.lib.ArrowInvalid: ("Could not convert 'Unknown' with type str: tried to convert to double", 'Conversion failed for column sales_closed with type object')
+2026-02-24 22:31:34,834 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 22:31:35,238 | INFO | IDS | Loaded dataset: sales
+2026-02-24 22:31:35,238 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 22:31:35,239 | INFO | IDS | Profiling sales dataset...
+2026-02-24 22:31:35,247 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 22:31:35,248 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 22:31:35,251 | ERROR | IDS | Ingestion pipeline failed.
+Traceback (most recent call last):
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\pipelines\run_ingestion.py", line 256, in run_ingestion
+    sales_cleaned = clean_dataframe(
+                    ^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\utils\missing_handler.py", line 292, in clean_dataframe
+    df = handle_missing_values(df, config, dataset_name)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\utils\missing_handler.py", line 257, in handle_missing_values
+    df.loc[:, col] = _impute_categorical(df[col], strategy)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KarthigeyanS\Documents\intelligent-demand-sensing\src\utils\missing_handler.py", line 176, in _impute_categorical
+    raise ValueError(f"Invalid categorical strategy: {strategy}")
+ValueError: Invalid categorical strategy: interpolate
+2026-02-24 22:35:48,897 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 22:35:49,318 | INFO | IDS | Loaded dataset: sales
+2026-02-24 22:35:49,318 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 22:35:49,318 | INFO | IDS | Profiling sales dataset...
+2026-02-24 22:35:49,327 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 22:35:49,327 | INFO | IDS | Applying duplicate and missing value handling (sales)...
+2026-02-24 22:35:49,335 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 22:35:49,335 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             20 |
++----------------------+----------------+
+| Missing Date         |             22 |
++----------------------+----------------+
+| Missing Target       |            154 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 22:35:49,336 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 22:35:49,336 | INFO | IDS | ====================================================
+
+2026-02-24 22:35:49,412 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 22:35:49,412 | INFO | IDS | Processing calendar dataset...
+2026-02-24 22:35:49,440 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 22:35:49,440 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 22:46:13,217 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 22:46:13,654 | INFO | IDS | Loaded dataset: sales
+2026-02-24 22:46:13,654 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 22:46:13,656 | INFO | IDS | Profiling sales dataset...
+2026-02-24 22:46:13,665 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 22:46:13,665 | INFO | IDS | Applying staged cleaning with reconciliation-safe attribution...
+2026-02-24 22:46:13,680 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 22:46:13,681 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             21 |
++----------------------+----------------+
+| Missing Date         |              1 |
++----------------------+----------------+
+| Missing Target       |            132 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 22:46:13,681 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 22:46:13,681 | INFO | IDS | ====================================================
+
+2026-02-24 22:46:13,752 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 22:46:13,752 | INFO | IDS | Processing calendar dataset...
+2026-02-24 22:46:13,777 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 22:46:13,777 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 22:50:32,002 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 22:50:32,414 | INFO | IDS | Loaded dataset: sales
+2026-02-24 22:50:32,414 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 22:50:32,415 | INFO | IDS | Profiling sales dataset...
+2026-02-24 22:50:32,426 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 22:50:32,426 | INFO | IDS | Applying staged cleaning with reconciliation-safe attribution...
+2026-02-24 22:50:32,455 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 22:50:32,455 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             21 |
++----------------------+----------------+
+| Missing Date         |              1 |
++----------------------+----------------+
+| Missing Target       |            132 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 22:50:32,456 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 22:50:32,456 | INFO | IDS | ====================================================
+
+2026-02-24 22:50:32,526 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 22:50:32,526 | INFO | IDS | Processing calendar dataset...
+2026-02-24 22:50:32,565 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 22:50:32,566 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 22:56:27,567 | INFO | IDS | Execution Mode: train
+2026-02-24 22:56:27,689 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows: 623 → 623
+Cols: 4 → 7
+--------------------------------------------
+2026-02-24 22:56:27,697 | INFO | IDS | 
+[STEP: time_features]
+Rows: 623 → 623
+Cols: 7 → 14
+--------------------------------------------
+2026-02-24 22:56:27,702 | INFO | IDS | 
+[STEP: lag_features]
+Rows: 623 → 623
+Cols: 14 → 18
+--------------------------------------------
+2026-02-24 22:56:27,708 | INFO | IDS | 
+[STEP: rolling_features]
+Rows: 623 → 623
+Cols: 18 → 24
+--------------------------------------------
+2026-02-24 22:56:27,716 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows: 623 → 623
+Cols: 24 → 25
+--------------------------------------------
+2026-02-24 22:56:27,731 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows: 623 → 623
+Cols: 25 → 26
+--------------------------------------------
+2026-02-24 22:56:27,732 | WARNING | IDS | 
+Row Removal Reason: initial_lag_window_drop
+2026-02-24 22:56:27,735 | WARNING | IDS | Rows Removed: 30
+2026-02-24 22:56:27,746 | WARNING | IDS | 
+Preview:
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|   index | date                |   sales_closed |   sales_open |   total_sales |   is_holiday |   is_festival | festival_name   |   day_of_week |   is_weekend |   week_of_year |   month |   quarter |   is_month_start |   is_month_end |   total_sales_lag_1 |   total_sales_lag_7 |   total_sales_lag_14 |   total_sales_lag_30 |   total_sales_rolling_mean_7 |   total_sales_rolling_std_7 |   total_sales_rolling_mean_14 |   total_sales_rolling_std_14 |   total_sales_rolling_mean_30 |   total_sales_rolling_std_30 |   avg_sales_same_weekday | demand_class   |
++=========+=====================+================+==============+===============+==============+===============+=================+===============+==============+================+=========+===========+==================+================+=====================+=====================+======================+======================+==============================+=============================+===============================+==============================+===============================+==============================+==========================+================+
+|     593 | 2024-10-31 00:00:00 |        14.5667 |      11.4967 |          0    |            0 |             0 |                 |             3 |            0 |             44 |      10 |         4 |                0 |              1 |                0    |                0    |                27.07 |                31.65 |                      11.7957 |                     14.8573 |                       13.3193 |                      14.2498 |                       14.4133 |                      12.6829 |                   8.4575 | Low            |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     594 | 2024-11-10 00:00:00 |         9.3    |      15.2    |         24.5  |            1 |             0 |                 |             6 |            1 |             45 |      11 |         4 |                0 |              0 |                0    |               29.98 |                16.5  |                31.44 |                      11.7957 |                     14.8573 |                       11.3857 |                      14.0759 |                       13.3583 |                      12.5149 |                   5.85   | Medium         |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     595 | 2024-11-14 00:00:00 |        13.1    |      13.01   |         26.11 |            0 |             0 |                 |             3 |            0 |             46 |      11 |         4 |                0 |              0 |               24.5  |               23.4  |                 0    |                16.48 |                      11.0129 |                     13.8497 |                       11.9571 |                      14.4568 |                       13.127  |                      12.2301 |                   9.225  | Medium         |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     596 | 2024-11-16 00:00:00 |        13.4    |      13.44   |         26.84 |            1 |             0 |                 |             5 |            1 |             46 |      11 |         4 |                0 |              0 |               26.11 |                0    |                 0    |                17.2  |                      11.4    |                     14.2847 |                       13.8221 |                      14.4797 |                       13.448  |                      12.4456 |                  24.345  | Medium         |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     597 | 2024-11-17 00:00:00 |        13.4    |      12.12   |         25.52 |            1 |             0 |                 |             6 |            1 |             46 |      11 |         4 |                0 |              0 |               26.84 |                0    |                29.97 |                 2    |                      15.2343 |                     14.3169 |                       15.7393 |                      14.2844 |                       13.7693 |                      12.6683 |                  12.56   | Medium         |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     598 | 2024-11-18 00:00:00 |        14.8    |      11.535  |          0    |            0 |             0 |                 |             0 |            0 |             47 |      11 |         4 |                0 |              0 |               25.52 |               29.19 |                30.36 |                 0    |                      18.88   |                     12.9776 |                       15.4214 |                      13.9898 |                       14.5533 |                      12.6425 |                   6.38   | Low            |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     599 | 2024-11-19 00:00:00 |        16.2    |      10.95   |         27.15 |            0 |             0 |                 |             1 |            0 |             47 |      11 |         4 |                0 |              0 |                0    |                0    |                 0    |                 0    |                      14.71   |                     13.7777 |                       13.2529 |                      13.8484 |                       14.5533 |                      12.6425 |                  13.8425 | Medium         |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     600 | 2024-11-20 00:00:00 |        17.6    |      10.14   |         27.74 |            0 |             0 |                 |             2 |            0 |             47 |      11 |         4 |                0 |              0 |               27.15 |                0    |                 0    |                19.35 |                      18.5886 |                     12.728  |                       15.1921 |                      13.7504 |                       15.4583 |                      12.5361 |                  26.7075 | High           |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     601 | 2024-11-21 00:00:00 |        18.8    |       9.45   |          0    |            0 |             0 |                 |             3 |            0 |             47 |      11 |         4 |                0 |              0 |               27.74 |               24.5  |                29.98 |                20.13 |                      22.5514 |                     10.0025 |                       17.1736 |                      13.3867 |                       15.738  |                      12.7182 |                  13.06   | Low            |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+|     602 | 2024-11-22 00:00:00 |        20      |       8.76   |         28.76 |            0 |             0 |                 |             4 |            0 |             47 |      11 |         4 |                0 |              0 |                0    |               26.11 |                23.4  |                21.43 |                      19.0514 |                     13.0341 |                       15.0321 |                      13.577  |                       15.067  |                      13.0063 |                  12.6825 | High           |
++---------+---------------------+----------------+--------------+---------------+--------------+---------------+-----------------+---------------+--------------+----------------+---------+-----------+------------------+----------------+---------------------+---------------------+----------------------+----------------------+------------------------------+-----------------------------+-------------------------------+------------------------------+-------------------------------+------------------------------+--------------------------+----------------+
+2026-02-24 22:59:06,918 | INFO | IDS | Starting feature engineering pipeline.
+2026-02-24 22:59:07,026 | INFO | IDS | Initial dataset shape: (623, 4)
+2026-02-24 22:59:07,026 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 22:59:07,031 | INFO | IDS | 
+Total Rows     : 623
+2026-02-24 22:59:07,033 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 22:59:07,034 | INFO | IDS | 
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| Column       | DType          |   Missing Count | Missing %   |   Unique Values | Constant   |
++==============+================+=================+=============+=================+============+
+| date         | datetime64[ns] |               0 | 0.00%       |             623 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| sales_closed | float64        |               0 | 0.00%       |             406 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| sales_open   | float64        |               0 | 0.00%       |             549 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+| total_sales  | float64        |               0 | 0.00%       |             543 | False      |
++--------------+----------------+-----------------+-------------+-----------------+------------+
+2026-02-24 22:59:07,034 | INFO | IDS | ==================================================
+
+2026-02-24 22:59:07,047 | INFO | IDS | Calendar dataset shape: (4018, 6)
+2026-02-24 22:59:07,047 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: calendar_dataset ==========
+2026-02-24 22:59:07,055 | WARNING | IDS | Missing rows in column 'is_festival' | Count: 3928 | First 50 row indices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53]
+2026-02-24 22:59:07,056 | WARNING | IDS | Missing rows in column 'festival_name' | Count: 3928 | First 50 row indices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53]
+2026-02-24 22:59:07,058 | INFO | IDS | 
+Total Rows     : 4018
+2026-02-24 22:59:07,059 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 22:59:07,059 | INFO | IDS | 
++----------------+----------------+-----------------+-------------+-----------------+------------+
+| Column         | DType          |   Missing Count | Missing %   |   Unique Values | Constant   |
++================+================+=================+=============+=================+============+
+| date           | datetime64[ns] |               0 | 0.00%       |            4018 | False      |
++----------------+----------------+-----------------+-------------+-----------------+------------+
+| day            | object         |               0 | 0.00%       |               7 | False      |
++----------------+----------------+-----------------+-------------+-----------------+------------+
+| is_festival    | float64        |            3928 | 97.76%      |               2 | False      |
++----------------+----------------+-----------------+-------------+-----------------+------------+
+| festival_name  | object         |            3928 | 97.76%      |              21 | False      |
++----------------+----------------+-----------------+-------------+-----------------+------------+
+| weekdayweekend | object         |               0 | 0.00%       |               2 | False      |
++----------------+----------------+-----------------+-------------+-----------------+------------+
+| is_holiday     | int64          |               0 | 0.00%       |               2 | False      |
++----------------+----------------+-----------------+-------------+-----------------+------------+
+2026-02-24 22:59:07,059 | INFO | IDS | ==================================================
+
+2026-02-24 22:59:07,066 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 22:59:07,097 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 22:59:07,106 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 22:59:07,121 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 22:59:07,131 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 22:59:07,135 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 22:59:07,147 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 623 → 593
+Row Δ  : -30
+Row %  : -4.82%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:20:05,152 | INFO | IDS | Starting feature engineering pipeline (Mode B).
+2026-02-24 23:20:05,259 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 23:20:05,259 | INFO | IDS | 
+Total Rows     : 623
+2026-02-24 23:20:05,260 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:20:05,260 | INFO | IDS | 
++--------------+----------------+-----------+-------------+----------+------------+
+| Column       | DType          |   Missing | Missing %   |   Unique | Constant   |
++==============+================+===========+=============+==========+============+
+| date         | datetime64[ns] |         0 | 0.00%       |      623 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_closed | float64        |         0 | 0.00%       |      406 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_open   | float64        |         0 | 0.00%       |      549 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| total_sales  | float64        |         0 | 0.00%       |      543 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:20:05,260 | INFO | IDS | ==================================================
+
+2026-02-24 23:20:05,271 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 23:20:05,274 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 23:20:05,279 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 23:20:05,296 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 23:20:05,301 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:20:05,304 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:20:05,305 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 623 → 593
+Row Δ  : -30
+Row %  : -4.82%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:20:05,311 | INFO | IDS | 
+[STEP: controlled_na_handling]
+Rows   : 593 → 593
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:20:05,329 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: final_model_ready ==========
+2026-02-24 23:20:05,330 | INFO | IDS | 
+Total Rows     : 593
+2026-02-24 23:20:05,330 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:20:05,331 | INFO | IDS | 
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| Column                      | DType          |   Missing | Missing %   |   Unique | Constant   |
++=============================+================+===========+=============+==========+============+
+| date                        | datetime64[ns] |         0 | 0.00%       |      593 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_closed                | float64        |         0 | 0.00%       |      385 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_open                  | float64        |         0 | 0.00%       |      523 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales                 | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| day_of_week                 | Int64          |         0 | 0.00%       |        7 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_weekend                  | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| week_of_year                | Int64          |         0 | 0.00%       |       51 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| month                       | Int64          |         0 | 0.00%       |       12 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| quarter                     | Int64          |         0 | 0.00%       |        4 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_start              | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_end                | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_1           | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_7           | float64        |         0 | 0.00%       |      518 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_14          | float64        |         0 | 0.00%       |      522 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_30          | float64        |         0 | 0.00%       |      527 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_7  | float64        |         0 | 0.00%       |      578 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_7   | float64        |         0 | 0.00%       |      582 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_14 | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_14  | float64        |         0 | 0.00%       |      587 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_30 | float64        |         0 | 0.00%       |      584 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_30  | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_holiday                  | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_festival                 | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| festival_name               | object         |         0 | 0.00%       |        6 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| avg_sales_same_weekday      | float64        |         0 | 0.00%       |      574 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| demand_class                | category       |         0 | 0.00%       |        3 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:20:05,331 | INFO | IDS | ==================================================
+
+2026-02-24 23:20:05,345 | INFO | IDS | Final model_ready shape: (593, 26)
+2026-02-24 23:20:05,346 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 23:20:05,346 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 23:20:51,628 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 23:20:52,032 | INFO | IDS | Loaded dataset: sales
+2026-02-24 23:20:52,033 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 23:20:52,033 | INFO | IDS | Profiling sales dataset...
+2026-02-24 23:20:52,042 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 23:20:52,042 | INFO | IDS | Applying staged cleaning with reconciliation-safe attribution...
+2026-02-24 23:20:52,065 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 23:20:52,066 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             21 |
++----------------------+----------------+
+| Missing Date         |              1 |
++----------------------+----------------+
+| Missing Target       |            132 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 23:20:52,066 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 23:20:52,067 | INFO | IDS | ====================================================
+
+2026-02-24 23:20:52,133 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 23:20:52,165 | INFO | IDS | Processing calendar dataset...
+2026-02-24 23:20:52,194 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 23:20:52,195 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 23:21:04,097 | INFO | IDS | Starting feature engineering pipeline (Mode B).
+2026-02-24 23:21:04,211 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 23:21:04,212 | INFO | IDS | 
+Total Rows     : 623
+2026-02-24 23:21:04,212 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:21:04,212 | INFO | IDS | 
++--------------+----------------+-----------+-------------+----------+------------+
+| Column       | DType          |   Missing | Missing %   |   Unique | Constant   |
++==============+================+===========+=============+==========+============+
+| date         | datetime64[ns] |         0 | 0.00%       |      623 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_closed | float64        |         0 | 0.00%       |      406 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_open   | float64        |         0 | 0.00%       |      549 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| total_sales  | float64        |         0 | 0.00%       |      543 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:21:04,213 | INFO | IDS | ==================================================
+
+2026-02-24 23:21:04,231 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 23:21:04,236 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 23:21:04,241 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 23:21:04,251 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 23:21:04,257 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:21:04,260 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:21:04,262 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 623 → 593
+Row Δ  : -30
+Row %  : -4.82%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:21:04,284 | INFO | IDS | 
+[STEP: controlled_na_handling]
+Rows   : 593 → 593
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:21:04,298 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: final_model_ready ==========
+2026-02-24 23:21:04,299 | INFO | IDS | 
+Total Rows     : 593
+2026-02-24 23:21:04,301 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:21:04,302 | INFO | IDS | 
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| Column                      | DType          |   Missing | Missing %   |   Unique | Constant   |
++=============================+================+===========+=============+==========+============+
+| date                        | datetime64[ns] |         0 | 0.00%       |      593 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_closed                | float64        |         0 | 0.00%       |      385 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_open                  | float64        |         0 | 0.00%       |      523 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales                 | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| day_of_week                 | Int64          |         0 | 0.00%       |        7 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_weekend                  | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| week_of_year                | Int64          |         0 | 0.00%       |       51 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| month                       | Int64          |         0 | 0.00%       |       12 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| quarter                     | Int64          |         0 | 0.00%       |        4 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_start              | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_end                | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_1           | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_7           | float64        |         0 | 0.00%       |      518 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_14          | float64        |         0 | 0.00%       |      522 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_30          | float64        |         0 | 0.00%       |      527 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_7  | float64        |         0 | 0.00%       |      578 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_7   | float64        |         0 | 0.00%       |      582 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_14 | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_14  | float64        |         0 | 0.00%       |      587 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_30 | float64        |         0 | 0.00%       |      584 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_30  | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_holiday                  | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_festival                 | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| festival_name               | object         |         0 | 0.00%       |        6 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| avg_sales_same_weekday      | float64        |         0 | 0.00%       |      574 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| demand_class                | category       |         0 | 0.00%       |        3 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:21:04,311 | INFO | IDS | ==================================================
+
+2026-02-24 23:21:04,341 | INFO | IDS | Final model_ready shape: (593, 26)
+2026-02-24 23:21:04,350 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 23:21:04,350 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 23:26:10,629 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 23:26:11,040 | INFO | IDS | Loaded dataset: sales
+2026-02-24 23:26:11,040 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 23:26:11,041 | INFO | IDS | Profiling sales dataset...
+2026-02-24 23:26:11,049 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 23:26:11,050 | INFO | IDS | Applying staged cleaning with reconciliation-safe attribution...
+2026-02-24 23:26:11,081 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 23:26:11,082 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             21 |
++----------------------+----------------+
+| Missing Date         |              1 |
++----------------------+----------------+
+| Missing Target       |            132 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 23:26:11,082 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 23:26:11,082 | INFO | IDS | ====================================================
+
+2026-02-24 23:26:11,156 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 23:26:11,156 | INFO | IDS | Processing calendar dataset...
+2026-02-24 23:26:11,202 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 23:26:11,202 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 23:26:18,127 | INFO | IDS | Starting feature engineering pipeline (Mode B).
+2026-02-24 23:26:18,223 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 23:26:18,224 | INFO | IDS | 
+Total Rows     : 623
+2026-02-24 23:26:18,224 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:26:18,225 | INFO | IDS | 
++--------------+----------------+-----------+-------------+----------+------------+
+| Column       | DType          |   Missing | Missing %   |   Unique | Constant   |
++==============+================+===========+=============+==========+============+
+| date         | datetime64[ns] |         0 | 0.00%       |      623 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_closed | float64        |         0 | 0.00%       |      406 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_open   | float64        |         0 | 0.00%       |      549 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| total_sales  | float64        |         0 | 0.00%       |      543 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:26:18,225 | INFO | IDS | ==================================================
+
+2026-02-24 23:26:18,253 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 23:26:18,262 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 23:26:18,303 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 23:26:18,350 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 23:26:18,358 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:26:18,369 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:26:18,370 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 623 → 593
+Row Δ  : -30
+Row %  : -4.82%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:31:28,703 | INFO | IDS | Starting feature engineering pipeline (Mode B).
+2026-02-24 23:31:28,809 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 23:31:28,809 | INFO | IDS | 
+Total Rows     : 623
+2026-02-24 23:31:28,810 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:31:28,810 | INFO | IDS | 
++--------------+----------------+-----------+-------------+----------+------------+
+| Column       | DType          |   Missing | Missing %   |   Unique | Constant   |
++==============+================+===========+=============+==========+============+
+| date         | datetime64[ns] |         0 | 0.00%       |      623 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_closed | float64        |         0 | 0.00%       |      406 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_open   | float64        |         0 | 0.00%       |      549 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| total_sales  | float64        |         0 | 0.00%       |      543 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:31:28,810 | INFO | IDS | ==================================================
+
+2026-02-24 23:31:28,824 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 23:31:28,833 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 23:31:28,860 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 23:31:28,874 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 23:31:28,880 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:31:28,886 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:31:28,888 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 623 → 593
+Row Δ  : -30
+Row %  : -4.82%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:31:28,894 | INFO | IDS | 
+[STEP: controlled_na_handling]
+Rows   : 593 → 593
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:31:28,916 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: final_model_ready ==========
+2026-02-24 23:31:28,917 | INFO | IDS | 
+Total Rows     : 593
+2026-02-24 23:31:28,918 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:31:28,918 | INFO | IDS | 
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| Column                      | DType          |   Missing | Missing %   |   Unique | Constant   |
++=============================+================+===========+=============+==========+============+
+| date                        | datetime64[ns] |         0 | 0.00%       |      593 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_closed                | float64        |         0 | 0.00%       |      385 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_open                  | float64        |         0 | 0.00%       |      523 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales                 | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| day_of_week                 | Int64          |         0 | 0.00%       |        7 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_weekend                  | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| week_of_year                | Int64          |         0 | 0.00%       |       51 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| month                       | Int64          |         0 | 0.00%       |       12 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| quarter                     | Int64          |         0 | 0.00%       |        4 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_start              | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_end                | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_1           | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_7           | float64        |         0 | 0.00%       |      518 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_14          | float64        |         0 | 0.00%       |      522 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_30          | float64        |         0 | 0.00%       |      527 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_7  | float64        |         0 | 0.00%       |      578 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_7   | float64        |         0 | 0.00%       |      582 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_14 | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_14  | float64        |         0 | 0.00%       |      587 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_30 | float64        |         0 | 0.00%       |      584 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_30  | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_holiday                  | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_festival                 | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| festival_name               | object         |         0 | 0.00%       |        6 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| avg_sales_same_weekday      | float64        |         0 | 0.00%       |      574 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| demand_class                | category       |         0 | 0.00%       |        3 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:31:28,919 | INFO | IDS | ==================================================
+
+2026-02-24 23:31:28,950 | INFO | IDS | Final model_ready shape: (593, 26)
+2026-02-24 23:31:28,953 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 23:31:28,963 | INFO | IDS | Feature engineering completed successfully.
+2026-02-24 23:32:22,905 | INFO | IDS | ========== INGESTION PIPELINE STARTED ==========
+2026-02-24 23:32:23,297 | INFO | IDS | Loaded dataset: sales
+2026-02-24 23:32:23,297 | INFO | IDS | Raw dataset shape: (777, 4)
+2026-02-24 23:32:23,298 | INFO | IDS | Profiling sales dataset...
+2026-02-24 23:32:23,306 | INFO | IDS | Data profiling reports saved to: output/reports
+2026-02-24 23:32:23,307 | INFO | IDS | Applying staged cleaning with reconciliation-safe attribution...
+2026-02-24 23:32:23,329 | INFO | IDS | 
+========== INGESTION ROW REMOVAL SUMMARY ==========
+2026-02-24 23:32:23,330 | INFO | IDS | 
++----------------------+----------------+
+| Reason               |   Rows Removed |
++======================+================+
+| Duplicate Rows       |             21 |
++----------------------+----------------+
+| Missing Date         |              1 |
++----------------------+----------------+
+| Missing Target       |            132 |
++----------------------+----------------+
+| Other Cleaning Rules |              0 |
++----------------------+----------------+
+2026-02-24 23:32:23,330 | INFO | IDS | 
+Total Rows Removed: 154
+2026-02-24 23:32:23,331 | INFO | IDS | ====================================================
+
+2026-02-24 23:32:23,400 | INFO | IDS | Cleaned sales dataset saved to: data/processed\cleaned_sales.parquet
+2026-02-24 23:32:23,400 | INFO | IDS | Processing calendar dataset...
+2026-02-24 23:32:23,429 | INFO | IDS | Cleaned calendar dataset saved to: data/processed\cleaned_calendar.parquet
+2026-02-24 23:32:23,429 | INFO | IDS | ========== INGESTION PIPELINE COMPLETED ==========
+2026-02-24 23:32:29,969 | INFO | IDS | Starting feature engineering pipeline (Mode B).
+2026-02-24 23:32:30,066 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: initial_cleaned_sales ==========
+2026-02-24 23:32:30,066 | INFO | IDS | 
+Total Rows     : 623
+2026-02-24 23:32:30,067 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:32:30,067 | INFO | IDS | 
++--------------+----------------+-----------+-------------+----------+------------+
+| Column       | DType          |   Missing | Missing %   |   Unique | Constant   |
++==============+================+===========+=============+==========+============+
+| date         | datetime64[ns] |         0 | 0.00%       |      623 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_closed | float64        |         0 | 0.00%       |      406 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| sales_open   | float64        |         0 | 0.00%       |      549 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+| total_sales  | float64        |         0 | 0.00%       |      543 | False      |
++--------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:32:30,067 | INFO | IDS | ==================================================
+
+2026-02-24 23:32:30,079 | INFO | IDS | 
+[STEP: time_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 4 → 11
+Col Δ  : 7
+--------------------------------------------------
+2026-02-24 23:32:30,082 | INFO | IDS | 
+[STEP: lag_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 11 → 15
+Col Δ  : 4
+--------------------------------------------------
+2026-02-24 23:32:30,087 | INFO | IDS | 
+[STEP: rolling_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 15 → 21
+Col Δ  : 6
+--------------------------------------------------
+2026-02-24 23:32:30,102 | INFO | IDS | 
+[STEP: calendar_merge]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 21 → 24
+Col Δ  : 3
+--------------------------------------------------
+2026-02-24 23:32:30,109 | INFO | IDS | 
+[STEP: aggregation_features]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 24 → 25
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:32:30,112 | INFO | IDS | 
+[STEP: demand_bucketing]
+Rows   : 623 → 623
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 25 → 26
+Col Δ  : 1
+--------------------------------------------------
+2026-02-24 23:32:30,113 | INFO | IDS | 
+[STEP: drop_max_lag_rows]
+Rows   : 623 → 593
+Row Δ  : -30
+Row %  : -4.82%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:32:30,117 | INFO | IDS | 
+[STEP: controlled_na_handling]
+Rows   : 593 → 593
+Row Δ  : 0
+Row %  : 0.00%
+Cols   : 26 → 26
+Col Δ  : 0
+--------------------------------------------------
+2026-02-24 23:32:30,125 | INFO | IDS | 
+========== COLUMN DIAGNOSTICS: final_model_ready ==========
+2026-02-24 23:32:30,126 | INFO | IDS | 
+Total Rows     : 593
+2026-02-24 23:32:30,126 | INFO | IDS | Duplicate Rows : 0
+2026-02-24 23:32:30,127 | INFO | IDS | 
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| Column                      | DType          |   Missing | Missing %   |   Unique | Constant   |
++=============================+================+===========+=============+==========+============+
+| date                        | datetime64[ns] |         0 | 0.00%       |      593 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_closed                | float64        |         0 | 0.00%       |      385 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| sales_open                  | float64        |         0 | 0.00%       |      523 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales                 | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| day_of_week                 | Int64          |         0 | 0.00%       |        7 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_weekend                  | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| week_of_year                | Int64          |         0 | 0.00%       |       51 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| month                       | Int64          |         0 | 0.00%       |       12 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| quarter                     | Int64          |         0 | 0.00%       |        4 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_start              | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_month_end                | Int64          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_1           | float64        |         0 | 0.00%       |      516 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_7           | float64        |         0 | 0.00%       |      518 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_14          | float64        |         0 | 0.00%       |      522 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_lag_30          | float64        |         0 | 0.00%       |      527 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_7  | float64        |         0 | 0.00%       |      578 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_7   | float64        |         0 | 0.00%       |      582 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_14 | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_14  | float64        |         0 | 0.00%       |      587 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_mean_30 | float64        |         0 | 0.00%       |      584 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| total_sales_rolling_std_30  | float64        |         0 | 0.00%       |      585 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_holiday                  | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| is_festival                 | int32          |         0 | 0.00%       |        2 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| festival_name               | object         |         0 | 0.00%       |        6 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| avg_sales_same_weekday      | float64        |         0 | 0.00%       |      574 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+| demand_class                | category       |         0 | 0.00%       |        3 | False      |
++-----------------------------+----------------+-----------+-------------+----------+------------+
+2026-02-24 23:32:30,128 | INFO | IDS | ==================================================
+
+2026-02-24 23:32:30,148 | INFO | IDS | Final model_ready shape: (593, 26)
+2026-02-24 23:32:30,152 | INFO | IDS | Saved model-ready dataset to: data/processed\model_ready.parquet
+2026-02-24 23:32:30,152 | INFO | IDS | Feature engineering completed successfully.
