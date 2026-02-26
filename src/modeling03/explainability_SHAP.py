@@ -1,23 +1,22 @@
 # src/modeling03/explainability_SHAP.py
 
 """
-SHAP Explainability Module
-===========================
+SHAP Explainability Module (Governed & Deterministic)
+======================================================
 
-This module generates SHAP explainability artifacts
-for supported regression models.
+Enterprise-grade SHAP integration aligned with IDS architecture.
 
-Design Principles:
-------------------
-- Fully config-driven
-- Model-type aware (Tree / Linear detection)
-- Safe fallback for unsupported models
-- No hardcoded assumptions
-- Production-safe (no crash on SHAP failure)
+Governance Rules
+----------------
+- Fully config-driven via config["shap"]
+- Disabled automatically in production if configured
+- Deterministic sampling using global seed
+- Never crashes training pipeline
 - Timestamp-based artifact versioning
+- Model-type aware (Tree / Linear detection)
 
-Supported Models:
------------------
+Supported Models
+----------------
 Tree-based:
     - RandomForest
     - XGBoost
@@ -28,14 +27,8 @@ Linear:
     - Ridge
 
 Unsupported:
-    - Prophet (skipped safely)
+    - Prophet
     - Custom ensembles without native support
-
-Outputs:
---------
-- SHAP summary plot (PNG)
-Saved under:
-    config["paths"]["output"]["plots"]
 """
 
 import os
@@ -64,15 +57,12 @@ def _detect_model_type(model: Any) -> str:
         "tree" | "linear" | "unsupported"
     """
 
-    # Tree models
     if hasattr(model, "feature_importances_"):
         return "tree"
 
-    # Linear models
     if hasattr(model, "coef_"):
         return "linear"
 
-    # Unsupported
     return "unsupported"
 
 
@@ -82,23 +72,7 @@ def _get_sample_data(
     seed: int
 ) -> pd.DataFrame:
     """
-    Subsample dataset for SHAP computation.
-
-    Why:
-    ----
-    SHAP can be computationally expensive.
-    Sampling keeps production safe.
-
-    Parameters
-    ----------
-    X : pd.DataFrame
-        Feature matrix.
-    sample_size : int
-        Maximum rows to sample.
-
-    Returns
-    -------
-    pd.DataFrame
+    Deterministic subsampling for SHAP computation.
     """
 
     if not isinstance(X, pd.DataFrame):
@@ -110,7 +84,7 @@ def _get_sample_data(
     if len(X) <= sample_size:
         return X
 
-    return X.sample(sample_size, random_state=seed)
+    return X.sample(n=sample_size, random_state=seed)
 
 
 # ==========================================================
@@ -127,55 +101,86 @@ def generate_shap_explainability(
     timestamp: str
 ) -> None:
     """
-    Generate SHAP explainability plot for supported models.
+    Generate SHAP summary plot under strict governance rules.
 
     Parameters
     ----------
     model : Any
         Trained model object.
     X_train : pd.DataFrame
-        Training features (used for background dataset).
+        Training features.
     X_test : pd.DataFrame
-        Test features (used for explanation).
+        Test features.
     model_name : str
-        Name of selected best model.
+        Name of selected model.
     output_dir : str
         Directory where SHAP plot will be saved.
     config : Dict
-        Project configuration dictionary.
+        Full project configuration.
     timestamp : str
-        Current run timestamp for versioning.
-
-    Behavior
-    --------
-    - Selects appropriate SHAP explainer
-    - Applies config-driven sampling
-    - Saves summary plot as PNG
-    - Fails gracefully if unsupported
+        Timestamp for artifact versioning.
     """
 
-    explain_cfg = config.get("explainability", {})
+    # ------------------------------------------------------
+    # Governance Check
+    # ------------------------------------------------------
 
-    if not explain_cfg.get("enabled", False):
-        logger.info("SHAP explainability disabled via config.")
+    shap_cfg = config.get("shap", {})
+
+    if not shap_cfg.get("enabled", False):
+        logger.info("SHAP disabled via config.")
         return
 
-    sample_size = explain_cfg.get("sample_size", 500)
+    execution_mode = config.get("execution", {}).get("mode", "train")
+
+    if execution_mode == "prod":
+        logger.info("SHAP skipped: disabled in production mode.")
+        return
+
+    # ------------------------------------------------------
+    # Validate inputs
+    # ------------------------------------------------------
+
+    if not isinstance(output_dir, str) or not output_dir:
+        raise ValueError("Invalid SHAP output directory.")
+
+    if not isinstance(timestamp, str) or not timestamp:
+        raise ValueError("Invalid timestamp for SHAP artifact.")
+
+    sample_size = shap_cfg.get("sample_size", 500)
+
+    if not isinstance(sample_size, int) or sample_size <= 0:
+        raise ValueError("shap.sample_size must be positive integer.")
+
+    if "seeds" not in config or "global_seed" not in config["seeds"]:
+        raise ValueError("Missing 'seeds.global_seed' for SHAP.")
+
     seed = config["seeds"]["global_seed"]
 
     model_type = _detect_model_type(model)
 
     if model_type == "unsupported":
-        logger.info(f"SHAP skipped: Model '{model_name}' not supported.")
+        logger.info(f"SHAP skipped: '{model_name}' not supported.")
         return
 
     try:
 
-        # Subsample for performance
+        # --------------------------------------------------
+        # Deterministic Sampling
+        # --------------------------------------------------
+
         X_train_sample = _get_sample_data(X_train, sample_size, seed)
         X_test_sample = _get_sample_data(X_test, sample_size, seed)
 
-        # Select explainer
+        logger.info(
+            f"SHAP sampling -> train: {len(X_train_sample)}, "
+            f"test: {len(X_test_sample)}"
+        )
+
+        # --------------------------------------------------
+        # Select Explainer
+        # --------------------------------------------------
+
         if model_type == "tree":
             explainer = shap.TreeExplainer(model)
 
@@ -186,27 +191,26 @@ def generate_shap_explainability(
             )
 
         else:
-            logger.info(f"SHAP skipped: No valid explainer for '{model_name}'.")
+            logger.info(f"SHAP skipped: no valid explainer.")
             return
 
         shap_values = explainer(X_test_sample)
 
-        # Ensure output directory exists
-        if not isinstance(output_dir, str) or not output_dir:
-            raise ValueError("Invalid output directory for SHAP plots.")
+        # --------------------------------------------------
+        # Artifact Persistence
+        # --------------------------------------------------
 
         os.makedirs(output_dir, exist_ok=True)
-
-        # Generate summary plot
-        shap.summary_plot(
-            shap_values,
-            X_test_sample,
-            show=False
-        )
 
         plot_path = os.path.join(
             output_dir,
             f"shap_summary_{model_name}_{timestamp}.png"
+        )
+
+        shap.summary_plot(
+            shap_values,
+            X_test_sample,
+            show=False
         )
 
         plt.tight_layout()
@@ -216,7 +220,6 @@ def generate_shap_explainability(
         logger.info(f"SHAP summary saved to: {plot_path}")
 
     except Exception as e:
-        # Fail-safe behavior: never crash pipeline due to SHAP
         logger.exception(
             f"SHAP generation failed for '{model_name}': {str(e)}"
         )

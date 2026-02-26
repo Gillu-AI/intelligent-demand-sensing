@@ -1,4 +1,25 @@
 # src/modeling03/prophet_model.py
+"""
+Prophet Regressor Wrapper (Deterministic Version)
+==================================================
+
+Wrapper class for Facebook Prophet to integrate with IDS architecture.
+
+Enhancements
+------------
+- Deterministic seed propagation
+- Strict config validation
+- Time-series safe behavior
+- Sklearn-like interface compatibility
+
+Notes
+-----
+- Uses only date and target column.
+- Ignores engineered features.
+- Compatible with evaluate.py output.
+- Designed to behave similar to sklearn model.
+- Deterministic across runs when seed fixed.
+"""
 
 from typing import Dict
 import pandas as pd
@@ -7,14 +28,7 @@ from prophet import Prophet
 
 class ProphetRegressor:
     """
-    Wrapper class for Facebook Prophet to integrate with IDS architecture.
-
-    Notes
-    -----
-    - Uses only date and target column.
-    - Ignores engineered features.
-    - Compatible with evaluate.py output.
-    - Designed to behave similar to sklearn model.
+    Deterministic Prophet wrapper aligned with IDS architecture.
     """
 
     def __init__(self, config: Dict):
@@ -27,6 +41,12 @@ class ProphetRegressor:
             Full configuration dictionary.
         """
 
+        if not isinstance(config, dict):
+            raise ValueError("config must be a dictionary.")
+
+        # ----------------------------
+        # Validate required sections
+        # ----------------------------
         if "data_schema" not in config or "sales" not in config["data_schema"]:
             raise ValueError("Missing 'data_schema.sales' configuration.")
 
@@ -37,15 +57,28 @@ class ProphetRegressor:
         ):
             raise ValueError("Missing 'modeling.models.prophet' configuration.")
 
+        if "seeds" not in config or "global_seed" not in config["seeds"]:
+            raise ValueError("Missing 'seeds.global_seed' configuration.")
+
         self.date_col = config["data_schema"]["sales"]["date_column"]
         self.target_col = config["data_schema"]["sales"]["target_column"]
 
         prophet_config = config["modeling"]["models"]["prophet"]
 
+        seed = config["seeds"]["global_seed"]
+
+        # ----------------------------
+        # Initialize deterministic Prophet
+        # ----------------------------
         self.model = Prophet(
             yearly_seasonality=prophet_config.get("yearly_seasonality", True),
             weekly_seasonality=prophet_config.get("weekly_seasonality", True),
+            random_state=seed,
         )
+
+    # ==========================================================
+    # FIT
+    # ==========================================================
 
     def fit(self, df: pd.DataFrame):
         """
@@ -55,13 +88,17 @@ class ProphetRegressor:
         ----------
         df : pd.DataFrame
             DataFrame containing date and target columns.
+
+        Returns
+        -------
+        self
         """
 
         if self.date_col not in df.columns:
-            raise ValueError(f"Column '{self.date_col}' not found in dataset.")
+            raise ValueError(f"Column '{self.date_col}' not found.")
 
         if self.target_col not in df.columns:
-            raise ValueError(f"Column '{self.target_col}' not found in dataset.")
+            raise ValueError(f"Column '{self.target_col}' not found.")
 
         prophet_df = df[[self.date_col, self.target_col]].copy()
 
@@ -75,6 +112,10 @@ class ProphetRegressor:
         self.model.fit(prophet_df)
 
         return self
+
+    # ==========================================================
+    # PREDICT
+    # ==========================================================
 
     def predict(self, df: pd.DataFrame):
         """
@@ -92,7 +133,7 @@ class ProphetRegressor:
         """
 
         if self.date_col not in df.columns:
-            raise ValueError(f"Column '{self.date_col}' not found in dataset.")
+            raise ValueError(f"Column '{self.date_col}' not found.")
 
         future_df = df[[self.date_col]].copy()
 

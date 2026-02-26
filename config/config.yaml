@@ -1,38 +1,18 @@
-# config/config.yaml
-
 # =====================================================================
 # Intelligent Demand Sensing & Autonomous Inventory Planning (IDS)
 # =====================================================================
-# This configuration file is the SINGLE SOURCE OF TRUTH.
-# All pipelines (ingestion → features → training → forecasting → inventory → LLM)
-# must strictly follow this structure.
-#
-# Design Rules:
-# - No hardcoded values in code
-# - Fully config-driven execution
-# - Defensive validation enforced in config_loader
-# - Safe for multi-environment deployment
-# =====================================================================
 
-
-# =====================================================================
-# Project Metadata
-# =====================================================================
 project:
   name: "Intelligent Demand Sensing & Autonomous Inventory Planning"
   short_name: "IDS"
   version: "1.0.0"
-  environment: "local"        # local | dev | staging | prod
+  environment: "local"
   timezone: "Asia/Kolkata"
-
 
 # =====================================================================
 # Paths Configuration
 # =====================================================================
-# All file-system references must originate here.
-# No pipeline may define paths directly.
 paths:
-
   data:
     raw: "data/raw"
     processed: "data/processed"
@@ -49,12 +29,11 @@ paths:
 
   logs: "logs"
 
-
 # =====================================================================
 # Logging & Reproducibility
 # =====================================================================
 logging:
-  level: "INFO"          # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  level: "INFO"
   log_to_file: true
   filename: "ids_project.log"
 
@@ -62,15 +41,10 @@ seeds:
   global_seed: 42
   propagate_to_models: true
 
-
 # =====================================================================
 # Data Schema & Column Normalization
 # =====================================================================
 data_schema:
-
-  # -------------------------------------------------------------------
-  # Sales Dataset Schema (Primary Demand Source)
-  # -------------------------------------------------------------------
   sales:
     date_column: "date"
     target_column: "total_sales"
@@ -89,7 +63,7 @@ data_schema:
       - day
 
     optional_column_policy:
-      on_missing: "warn"   # warn | ignore | error
+      on_missing: "warn"
 
     normalize_columns: true
 
@@ -99,9 +73,6 @@ data_schema:
       sales_open: ["sales_open", "open_sales"]
       sales_closed: ["sales_closed", "closed_sales"]
 
-  # -------------------------------------------------------------------
-  # Calendar Dataset Schema
-  # -------------------------------------------------------------------
   calendar:
     date_column: "date"
 
@@ -127,21 +98,16 @@ data_schema:
     rename_map:
       date: ["date"]
       is_festival: ["festival", "festival_flag", "is_festival"]
-      is_holiday: ["holiday", "is_holiday"]
+      is_holiday: ["holiday", "holiday_flag", "is_holiday"]
       festival_name: ["festival_name", "fest_name"]
       weekday_weekend: ["weekday_weekend", "week_type"]
       day: ["day", "weekday", "day_of_week"]
-
 
 # =====================================================================
 # Ingestion Configuration
 # =====================================================================
 ingestion:
-
-  # Primary demand dataset
   demand_source: "sales"
-
-  # Global ingestion behavior
   header: true
   skip_rows: 0
 
@@ -152,97 +118,51 @@ ingestion:
     - "null"
     - "None"
 
-  strict_load: true   # Fail entire pipeline if any dataset fails
+  strict_load: true
 
-
-  # -------------------------------------------------------------------
-  # Multi-source dataset configuration
-  # -------------------------------------------------------------------
   datasets:
-
-    # -------------------------
-    # CSV Source
-    # -------------------------
     calendar:
       enabled: true
       source_type: csv
       file: "calendar_holidays.csv"
-
       csv:
         delimiter: ","
         encoding: "utf-8"
 
-    # -------------------------
-    # Excel Source (Demand)
-    # -------------------------
     sales:
       enabled: true
       source_type: excel
       file: "sales_data.xlsx"
-
       excel:
         sheet_name: "22-24"
 
-    # -------------------------
-    # Parquet Source
-    # -------------------------
-    demand_history:
-      enabled: false
-      source_type: parquet
-      file: "demand_history.parquet"
+# =====================================================================
+# Data Cleaning
+# =====================================================================
+data_cleaning:
+  sales:
 
-      parquet:
-        engine: "pyarrow"
+    duplicate:
+      unique_key: ["date"]
+      strategy: "keep_first"
 
-    # -------------------------
-    # Database Source
-    # -------------------------
-    master_data:
-      enabled: false
-      source_type: database
+    critical_columns:
+      - date
+      - total_sales
 
-      database:
-        engine: "postgresql"
+    missing:
+      numeric: "interpolate"
+      categorical: "unknown"
+      boolean: "mode"
+      datetime: "none"
 
-        host: "localhost"            # or "${DB_HOST}"
-        port: 5432                   # or "${DB_PORT}"
-        database: "inventory_db"     # or "${DB_NAME}"
-
-        schema: "public"
-        table: "product_master"
-
-        username_env: "DB_USER"
-        password_env: "DB_PASS"
-
-        fetch_size: 50000
-
-    # -------------------------
-    # API Source
-    # -------------------------
-    promotions:
-      enabled: false
-      source_type: api
-
-      api:
-        method: "GET"
-        url: "https://api.example.com/promotions"
-
-        headers:
-          authorization_env: "API_TOKEN"
-          content-type: "application/json"
-
-        params:
-          region: "IN"
-          active: true
-
-        timeout_seconds: 30
-
+    per_column:
+      total_sales: "ffill"
 
 # =====================================================================
 # Feature Engineering
 # =====================================================================
 features:
-
   time_features:
     enabled: true
     day_of_week: true
@@ -274,60 +194,24 @@ features:
     labels: ["Low", "Medium", "High"]
 
 # =====================================================================
-# Data Cleaning Rules
-# =====================================================================
-data_cleaning:
-
-  sales:
-
-    # ---------------------------------------------------
-    # Duplicate Handling
-    # ---------------------------------------------------
-    duplicate:
-      unique_key: ["date"]
-      strategy: "keep_first"   # keep_first | keep_last | error | none
-
-    # ---------------------------------------------------
-    # Structural Integrity Enforcement
-    # These columns MUST NOT contain missing values.
-    # Rows missing these columns will be dropped.
-    # ---------------------------------------------------
-    critical_columns:
-      - date
-      - total_sales
-
-    # ---------------------------------------------------
-    # Global Missing Value Strategy (Post Critical Drop)
-    # ---------------------------------------------------
-    missing:
-      numeric: "interpolate"
-      categorical: "unknown"
-      boolean: "mode"
-      datetime: "none"
-
-    # ---------------------------------------------------
-    # Column-Specific Overrides
-    # ---------------------------------------------------
-    per_column:
-      total_sales: "ffill"
-
-
-# =====================================================================
 # Modeling Configuration
 # =====================================================================
 modeling:
 
   train_test_split:
     method: "time"
-    test_days: 3
+    test_days: 90
 
   forecast_horizon_days: 365
 
-  models:
+  ranking:
+    primary_metric: "MAPE (%)"
+    higher_is_better: false
 
+  models:
     linear_regression:
       enabled: true
-    
+
     ridge:
       enabled: true
 
@@ -350,12 +234,12 @@ modeling:
         learning_rate: 0.05
         n_estimators: 200
         max_depth: -1
+        verbosity: -1
 
     prophet:
       enabled: false
       yearly_seasonality: true
       weekly_seasonality: true
-
 
 # =====================================================================
 # Hyperparameter Tuning
@@ -383,7 +267,6 @@ hyperparameter_tuning:
     max_depth: [-1, 10, 20]
     n_estimators: [100, 200]
 
-
 # =====================================================================
 # Ensemble Configuration
 # =====================================================================
@@ -393,21 +276,17 @@ ensemble:
   top_k_models: 3
   meta_model: "ridge"
 
-
 # =====================================================================
-# Inventory Planning
+# Inventory (Required by Loader)
 # =====================================================================
 inventory:
   service_level: 0.95
   lead_time_days: 7
   demand_variability_method: "std"
-
-  # Training / Simulation Only
   simulated_current_inventory: 500
 
-
 # =====================================================================
-# Forecasting Configuration
+# Forecasting (Required by Loader)
 # =====================================================================
 forecasting:
   enabled: true
@@ -415,74 +294,41 @@ forecasting:
   start_date: "2025-03-23"
   end_date: "2025-12-15"
 
-  rolling_summary:
-    enabled: true
-    window_months: 3
-
-  output:
-    include_weekly_summary: true
-    include_monthly_summary: true
-
-
 # =====================================================================
-# LLM What-If Scenario Engine Configuration
+# LLM (Validator-Compliant)
 # =====================================================================
 llm:
-  enabled: true
+  enabled: false
+  storage_path: "output/scenarios/store/scenario_store.json"
+  scenario_ttl_hours: 24
 
-  # ---------------------------------------------------------
-  # Session Management
-  # ---------------------------------------------------------
   session:
     enabled: true
     auto_create_session: true
     include_timestamp_in_filename: true
 
-  # ---------------------------------------------------------
-  # Output Folder Structure (Option B - Approved)
-  # ---------------------------------------------------------
   output_structure:
     use_session_subfolders: true
     scenarios_subfolder: "scenarios"
     comparisons_subfolder: "comparisons"
     store_subfolder: "store"
 
-  # ---------------------------------------------------------
-  # Scenario Persistence (JSON Store)
-  # ---------------------------------------------------------
-  storage_path: "output/scenarios/store/scenario_store.json"
-  scenario_ttl_hours: 24
-
-  # ---------------------------------------------------------
-  # Scenario ID Formatting
-  # ---------------------------------------------------------
   id_format:
     prefix: "SCN"
     include_timestamp: true
     counter_padding: 3
-
-  # ---------------------------------------------------------
-  # Runtime Mode
-  # ---------------------------------------------------------
-  default_mode: "stateless"   # stateless | stateful
 
   runtime_control:
     allow_in_production: false
     allow_in_training: true
     allow_in_ci: false
 
-  # ---------------------------------------------------------
-  # Model Configuration (LLM Provider)
-  # ---------------------------------------------------------
   model_name: "gpt-4"
   provider: "openai"
   temperature: 0.2
   max_tokens: 500
   fallback_regex: true
 
-  # ---------------------------------------------------------
-  # Strict Guardrails (Enterprise Enforcement)
-  # ---------------------------------------------------------
   guardrails:
     max_demand_change_pct: 50
     max_lead_time_days: 90
@@ -490,35 +336,29 @@ llm:
       min: 0.80
       max: 0.99
 
-  # ---------------------------------------------------------
-  # Comparison Engine
-  # ---------------------------------------------------------
   comparison:
     enabled: true
     recompute_inventory: true
     export_markdown: true
 
-
 # =====================================================================
-# Execution Controls
-# =====================================================================
-execution:
-  mode: "train"   # dev | train | prod | backfill
-  save_intermediate_outputs: true
-  overwrite_existing_outputs: false
-
-
-# =====================================================================
-# SHAP Explainability
+# SHAP (Phase 6 Governance)
 # =====================================================================
 shap:
   enabled: true
   sample_size: 500
 
+# =====================================================================
+# Execution Controls
+# =====================================================================
+execution:
+  mode: "train"
+  save_intermediate_outputs: true
+  overwrite_existing_outputs: false
 
-# ==============================
+# =====================================================================
 # Visualization
-# ==============================
+# =====================================================================
 visualization:
   enabled: true
   skip_in_production: true

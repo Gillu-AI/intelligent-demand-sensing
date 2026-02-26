@@ -2,100 +2,44 @@
 
 """
 Stacking Ensemble Module
-========================
+===========================================================
 
-Builds stacking model using top-K models
-and configurable meta-model.
+Implements classic Out-Of-Fold (OOF) stacking using TimeSeriesSplit.
+
+Design Principles
+-----------------
+- No data leakage
+- Deterministic folds
+- Time-series discipline (no shuffle)
+- Config-driven CV splits
+- Seed propagation
+- Production-safe behavior
+
+Stacking Strategy
+-----------------
+1. Generate out-of-fold predictions for each base model.
+2. Train meta-model on OOF predictions.
+3. Refit base models on full training data.
+4. During inference:
+   - Base models predict on X_test
+   - Meta-model predicts using stacked test predictions
+
+This guarantees meta-model never sees in-sample predictions.
 """
 
 from typing import Dict
+import numpy as np
 import pandas as pd
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.linear_model import Ridge
+from utils.model_utils import train_model
 
 
-def build_stacking_features(
-    models: Dict,
-    X: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Generate prediction matrix from base models.
+# ==========================================================
+# Internal Utilities
+# ==========================================================
 
-    Parameters
-    ----------
-    models : Dict
-        Dictionary of trained base models.
-    X : pd.DataFrame
-        Feature matrix.
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame where each column is predictions
-        from one base model.
-    """
-
-    if not models:
-        raise ValueError("Base models dictionary cannot be empty for stacking.")
-
-    stacking_df = pd.DataFrame(index=X.index)
-
-    for name, model in models.items():
-        stacking_df[name] = model.predict(X)
-
-    return stacking_df
-
-
-def _get_meta_model(config: Dict):
-    """
-    Initialize meta-model based on config.
-
-    Currently supported:
-    - ridge
-    """
-
-    if "ensemble" not in config:
-        raise ValueError("Missing 'ensemble' configuration.")
-
-    ensemble_cfg = config["ensemble"]
-
-    if "meta_model" not in ensemble_cfg:
-        raise ValueError("Missing 'ensemble.meta_model' configuration.")
-
-    meta_name = ensemble_cfg["meta_model"].lower()
-
-    seed = config.get("seeds", {}).get("global_seed")
-
-    if meta_name == "ridge":
-        return Ridge(random_state=seed)
-
-    raise ValueError(
-        f"Unsupported meta_model '{meta_name}'. "
-        f"Currently supported: ['ridge']"
-    )
-
-
-def train_stacking_model(
-    base_models: Dict,
-    X_train: pd.DataFrame,
-    y_train: pd.Series,
-    config: Dict
-):
-    """
-    Train stacking meta-model using base model predictions.
-
-    Parameters
-    ----------
-    base_models : Dict
-        Top-K trained models.
-    X_train : pd.DataFrame
-    y_train : pd.Series
-    config : Dict
-
-    Returns
-    -------
-    meta_model : trained meta-model
-    """
-
+def _validate_stacking_config(config: Dict) -> Dict:
     if "ensemble" not in config:
         raise ValueError("Missing 'ensemble' configuration.")
 
@@ -105,32 +49,124 @@ def train_stacking_model(
         raise ValueError("Stacking requested but ensemble.enabled is False.")
 
     if ensemble_cfg.get("method", "").lower() != "stacking":
-        raise ValueError("Ensemble method must be 'stacking' for this module.")
+        raise ValueError("Ensemble method must be 'stacking'.")
 
-    if X_train.empty or y_train.empty:
-        raise ValueError("Training data cannot be empty for stacking.")
+    if "seeds" not in config or "global_seed" not in config["seeds"]:
+        raise ValueError("Missing 'seeds.global_seed'.")
 
-    stacking_X_train = build_stacking_features(base_models, X_train)
-
-    meta_model = _get_meta_model(config)
-
-    meta_model.fit(stacking_X_train, y_train)
-
-    return meta_model
+    return ensemble_cfg
 
 
-def predict_stacking_model(
-    base_models: Dict,
-    meta_model,
-    X_test: pd.DataFrame
+def _get_meta_model(config: Dict):
+    meta_name = config["ensemble"]["meta_model"].lower()
+    seed = config["seeds"]["global_seed"]
+
+    if meta_name == "ridge":
+        return Ridge(random_state=seed)
+
+    raise ValueError(
+        f"Unsupported meta_model '{meta_name}'. "
+        f"Supported: ['ridge']"
+    )
+
+
+# ==========================================================
+# OOF Stacking Implementation
+# ==========================================================
+
+def train_stacking_model(
+    base_model_factories: Dict[str, callable],
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    config: Dict,
 ):
     """
-    Predict using stacking ensemble.
+    Train leakage-safe stacking ensemble using OOF predictions.
 
     Parameters
     ----------
-    base_models : Dict
-    meta_model : trained meta model
+    base_model_factories : Dict[str, callable]
+        Dictionary of model factories (NOT fitted models).
+    X_train : pd.DataFrame
+    y_train : pd.Series
+    config : Dict
+
+    Returns
+    -------
+    dict
+        {
+            "base_models": fitted_base_models,
+            "meta_model": fitted_meta_model
+        }
+    """
+
+    ensemble_cfg = _validate_stacking_config(config)
+
+    if X_train.empty or y_train.empty:
+        raise ValueError("Training data cannot be empty.")
+
+    cv_splits = config["hyperparameter_tuning"]["cv_splits"]
+
+    tscv = TimeSeriesSplit(n_splits=cv_splits)
+
+    # OOF prediction storage
+    oof_predictions = {
+        name: np.zeros(len(X_train))
+        for name in base_model_factories.keys()
+    }
+
+    # ======================================================
+    # Generate OOF Predictions
+    # ======================================================
+
+    for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X_train)):
+
+        X_tr, X_val = X_train.iloc[train_idx], X_train.iloc[val_idx]
+        y_tr = y_train.iloc[train_idx]
+
+        for name, factory in base_model_factories.items():
+
+            model = factory()
+            train_model(model, X_tr, y_tr)
+
+            preds = model.predict(X_val)
+            oof_predictions[name][val_idx] = preds
+
+    # Build OOF feature matrix
+    stacking_X = pd.DataFrame(oof_predictions, index=X_train.index)
+
+    # Train meta-model on OOF predictions
+    meta_model = _get_meta_model(config)
+    meta_model.fit(stacking_X, y_train)
+
+    # ======================================================
+    # Refit Base Models on Full Training Data
+    # ======================================================
+
+    fitted_base_models = {}
+
+    for name, factory in base_model_factories.items():
+        model = factory()
+        fitted_model = train_model(model, X_train, y_train)
+        fitted_base_models[name] = fitted_model
+
+    return {
+        "base_models": fitted_base_models,
+        "meta_model": meta_model
+    }
+
+
+def predict_stacking_model(
+    stacking_bundle: Dict,
+    X_test: pd.DataFrame
+):
+    """
+    Predict using trained stacking ensemble.
+
+    Parameters
+    ----------
+    stacking_bundle : Dict
+        Output from train_stacking_model.
     X_test : pd.DataFrame
 
     Returns
@@ -140,9 +176,15 @@ def predict_stacking_model(
     """
 
     if X_test.empty:
-        raise ValueError("X_test cannot be empty for stacking prediction.")
+        raise ValueError("X_test cannot be empty.")
 
-    stacking_X_test = build_stacking_features(base_models, X_test)
+    base_models = stacking_bundle["base_models"]
+    meta_model = stacking_bundle["meta_model"]
+
+    stacking_X_test = pd.DataFrame(index=X_test.index)
+
+    for name, model in base_models.items():
+        stacking_X_test[name] = model.predict(X_test)
 
     preds = meta_model.predict(stacking_X_test)
 

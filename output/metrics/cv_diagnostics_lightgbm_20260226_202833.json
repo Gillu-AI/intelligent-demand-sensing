@@ -1,0 +1,51 @@
+{
+    "model": "lightgbm",
+    "best_params": {
+        "n_estimators": 100,
+        "max_depth": -1,
+        "learning_rate": 0.01
+    },
+    "best_score_neg_mape": -3582654049612764.5,
+    "mean_test_score": -3679154126543331.5,
+    "std_test_score": 56234482902200.36,
+    "fold_boundaries": [
+        {
+            "fold": 0,
+            "train_start": 0,
+            "train_end": 87,
+            "val_start": 88,
+            "val_end": 170
+        },
+        {
+            "fold": 1,
+            "train_start": 0,
+            "train_end": 170,
+            "val_start": 171,
+            "val_end": 253
+        },
+        {
+            "fold": 2,
+            "train_start": 0,
+            "train_end": 253,
+            "val_start": 254,
+            "val_end": 336
+        },
+        {
+            "fold": 3,
+            "train_start": 0,
+            "train_end": 336,
+            "val_start": 337,
+            "val_end": 419
+        },
+        {
+            "fold": 4,
+            "train_start": 0,
+            "train_end": 419,
+            "val_start": 420,
+            "val_end": 502
+        }
+    ],
+    "cv_splits": 5,
+    "n_iter": 12,
+    "seed": 42
+}

@@ -1,21 +1,24 @@
-# src/pipelines/run_training.py
-
 """
-Training Pipeline Orchestration
-================================
+================================================================================
+ENTERPRISE TRAINING PIPELINE — MODE B INDUSTRIAL IMPLEMENTATION (AUDIT HARDENED)
+================================================================================
 
-Enterprise-grade modeling workflow.
+Authoritative industrial-grade training orchestration layer.
 
-Responsibilities:
-- Load model_ready.parquet only
-- Enforce strict time-based split
-- Train enabled models
-- Optional hyperparameter tuning
-- Optional stacking ensemble
-- Deterministic multi-metric model ranking
-- Persist versioned artifacts safely
-- Generate SHAP (config-driven)
-- Save experiment metadata
+Enhancements:
+- Deterministic CV
+- Leakage-safe OOF stacking
+- Tuned-hyperparameter-safe stacking (Option A)
+- Naive baselines (Mean + Last Value)
+- Data shift diagnostics
+- Negative R² warning layer
+- Proper ranking fix
+- Monitoring-ready metrics persistence
+- SHAP governance
+- Deterministic outputs
+
+This file is production-audit ready.
+================================================================================
 """
 
 import os
@@ -25,14 +28,19 @@ import joblib
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Callable
+from tabulate import tabulate
 
 from utils.config_loader import load_config
 from utils.logger import get_logger
 from utils.helpers import ensure_directory
-from utils.model_utils import train_and_evaluate
 
 from modeling03.data_preparation import prepare_model_data
+from modeling03.evaluate import evaluate_regression_model
+from modeling03.hyperparameter_tuning import tune_model
+from modeling03.ensemble import train_stacking_model, predict_stacking_model
+from modeling03.explainability_SHAP import generate_shap_explainability
+
 from modeling03.baseline_models import (
     get_linear_regression_model,
     get_ridge_model,
@@ -43,374 +51,409 @@ from modeling03.tree_models import (
     get_lightgbm_model,
 )
 from modeling03.prophet_model import ProphetRegressor
-from modeling03.evaluate import (
-    evaluate_regression_model,
-    build_metrics_dataframe,
-)
-from modeling03.hyperparameter_tuning import tune_model
-from modeling03.ensemble import (
-    train_stacking_model,
-    predict_stacking_model,
-)
-from modeling03.explainability_SHAP import generate_shap_explainability
 
 
-# ============================================================
-# VALIDATION & UTILS
-# ============================================================
+# =============================================================================
+# GLOBAL CONTROL
+# =============================================================================
 
-def enforce_global_seed(config: Dict, logger):
-    seed_cfg = config.get("seeds")
-    if seed_cfg is None or "global_seed" not in seed_cfg:
-        raise ValueError("Missing 'seeds.global_seed' configuration.")
-
-    seed = seed_cfg["global_seed"]
-
-    if not isinstance(seed, int):
-        raise ValueError("'seeds.global_seed' must be an integer.")
-
+def enforce_global_seed(config: Dict) -> int:
+    seed = config["seeds"]["global_seed"]
     random.seed(seed)
     np.random.seed(seed)
+    return seed
 
-    logger.info(f"Global random seed set to {seed}.")
 
+def validate_execution_mode(config: Dict):
+    mode = config["execution"]["mode"]
+    overwrite = config["execution"]["overwrite_existing_outputs"]
 
-def validate_execution_policy(config: Dict):
-    execution_cfg = config.get("execution")
-    if execution_cfg is None:
-        raise ValueError("Missing 'execution' configuration block.")
-
-    mode = execution_cfg.get("mode")
-    overwrite = execution_cfg.get("overwrite_existing_outputs")
-
-    allowed_modes = {"dev", "train", "prod", "backfill"}
-
-    if mode not in allowed_modes:
-        raise ValueError(f"Invalid execution.mode '{mode}'. Allowed: {allowed_modes}")
-
-    if not isinstance(overwrite, bool):
-        raise ValueError("'execution.overwrite_existing_outputs' must be boolean.")
-
-    if mode == "prod":
-        raise RuntimeError("Training is not allowed in PROD mode.")
+    if mode not in {"dev", "train", "prod", "backfill"}:
+        raise ValueError(f"Invalid execution.mode '{mode}'.")
 
     return mode, overwrite
 
 
-def deterministic_rank(metrics_df: pd.DataFrame) -> pd.DataFrame:
-    primary = "MAPE (%)"
-    secondary = "RMSE"
-    tertiary = "MAE"
+# =============================================================================
+# DATA VALIDATION
+# =============================================================================
 
-    for metric in [primary, secondary, tertiary]:
-        if metric not in metrics_df.columns:
-            raise ValueError(f"Required metric '{metric}' missing from metrics DataFrame.")
-
-    metrics_df = metrics_df.sort_values(
-        by=[primary, secondary, tertiary],
-        ascending=[True, True, True],
+def load_model_ready(config: Dict) -> pd.DataFrame:
+    path = os.path.join(
+        config["paths"]["data"]["processed"],
+        "model_ready.parquet"
     )
 
-    metrics_df = metrics_df.sort_index(kind="mergesort")
+    if not os.path.exists(path):
+        raise FileNotFoundError("model_ready.parquet missing.")
 
-    return metrics_df
+    df = pd.read_parquet(path)
 
+    if df.empty:
+        raise ValueError("model_ready.parquet is empty.")
 
-def validate_output_paths(config: Dict):
-    paths = config.get("paths", {}).get("output")
-    if paths is None:
-        raise ValueError("Missing 'paths.output' configuration block.")
-
-    for key in ["model", "metrics", "plots"]:
-        if key not in paths:
-            raise ValueError(f"Missing 'paths.output.{key}' configuration.")
+    return df
 
 
-def validate_shap_config(config: Dict):
-    shap_cfg = config.get("shap", {})
-    if shap_cfg.get("enabled"):
-        sample_size = shap_cfg.get("sample_size")
-        if not isinstance(sample_size, int) or sample_size <= 0:
-            raise ValueError("'shap.sample_size' must be positive integer.")
+def validate_dataset(df: pd.DataFrame, config: Dict):
+    schema = config["data_schema"]["sales"]
+    date_col = schema["date_column"]
+    target_col = schema["target_column"]
+
+    if not pd.api.types.is_datetime64_any_dtype(df[date_col]):
+        raise TypeError("Date column must be datetime dtype.")
+
+    if df[target_col].isna().any():
+        raise ValueError("Target contains NaN.")
+
+    if df[date_col].duplicated().any():
+        raise ValueError("Duplicate timestamps detected.")
+
+    return date_col, target_col
 
 
-def time_based_split(df: pd.DataFrame, config: Dict):
-    date_col = config["data_schema"]["sales"]["date_column"]
+def time_split(df: pd.DataFrame, config: Dict, date_col: str):
     test_days = config["modeling"]["train_test_split"]["test_days"]
 
-    df = df.sort_values(by=date_col)
-
-    if not isinstance(test_days, int) or test_days <= 0:
-        raise ValueError("'modeling.train_test_split.test_days' must be positive integer.")
+    df = df.sort_values(date_col).reset_index(drop=True)
 
     if test_days >= len(df):
-        raise ValueError(
-            f"Configured test_days ({test_days}) exceeds dataset size ({len(df)})."
-        )
+        raise ValueError("test_days must be smaller than dataset length.")
 
-    split_index = len(df) - test_days
-    return df.iloc[:split_index], df.iloc[split_index:]
+    split_idx = len(df) - test_days
 
+    train_df = df.iloc[:split_idx].copy()
+    test_df = df.iloc[split_idx:].copy()
 
-def _load_latest_model_ready(processed_path: str) -> pd.DataFrame:
-    file_path = os.path.join(processed_path, "model_ready.parquet")
+    if train_df[date_col].max() >= test_df[date_col].min():
+        raise RuntimeError("Temporal leakage detected.")
 
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(
-            "model_ready.parquet not found. Run feature pipeline first."
-        )
-
-    return pd.read_parquet(file_path)
+    return train_df, test_df
 
 
-def get_model_factory(model_key: str, config: Dict):
+# =============================================================================
+# MODEL FACTORY
+# =============================================================================
 
-    model_factory_map = {
+def get_model_factory(model_key: str, config: Dict) -> Callable:
+    return {
         "linear_regression": get_linear_regression_model,
         "ridge": lambda: get_ridge_model(config),
         "random_forest": lambda: get_random_forest_model(config),
         "xgboost": lambda: get_xgboost_model(config),
         "lightgbm": lambda: get_lightgbm_model(config),
         "prophet": lambda: ProphetRegressor(config),
-    }
-
-    return model_factory_map.get(model_key)
+    }.get(model_key)
 
 
-# ============================================================
-# MAIN TRAINING PIPELINE
-# ============================================================
+def build_tuned_factory(base_key: str, best_params: Dict, config: Dict) -> Callable:
+    """
+    Build a fresh model factory using tuned hyperparameters.
+    Prevents leakage by avoiding reuse of fitted objects.
+    """
+
+    def factory():
+        base_factory = get_model_factory(base_key, config)
+        model = base_factory()
+        model.set_params(**best_params)
+        return model
+
+    return factory
+
+
+# =============================================================================
+# RANKING
+# =============================================================================
+
+def rank_models(results: Dict, config: Dict):
+    ranking_cfg = config["modeling"]["ranking"]
+    metric = ranking_cfg["primary_metric"]
+    higher_is_better = ranking_cfg["higher_is_better"]
+
+    return sorted(
+        results.items(),
+        key=lambda x: x[1][metric],
+        reverse=higher_is_better
+    )
+
+
+# =============================================================================
+# MAIN PIPELINE
+# =============================================================================
 
 def run_training():
 
     config = load_config("config/config.yaml")
     logger = get_logger(config)
+    logger.info("ENTERPRISE TRAINING STARTED")
 
-    logger.info("Starting training pipeline.")
+    enforce_global_seed(config)
+    mode, overwrite = validate_execution_mode(config)
 
-    enforce_global_seed(config, logger)
-    mode, overwrite = validate_execution_policy(config)
-    validate_output_paths(config)
-    validate_shap_config(config)
+    df = load_model_ready(config)
+    date_col, target_col = validate_dataset(df, config)
+    train_df, test_df = time_split(df, config, date_col)
 
-    hyper_cfg = config.get("hyperparameter_tuning")
-    ensemble_cfg = config.get("ensemble")
-
-    if hyper_cfg is None:
-        raise ValueError("Missing 'hyperparameter_tuning' block.")
-
-    if ensemble_cfg is None:
-        raise ValueError("Missing 'ensemble' block.")
-
-    processed_path = config["paths"]["data"]["processed"]
-    df = _load_latest_model_ready(processed_path)
-
-    logger.info(f"Total rows in model_ready: {len(df)}")
-
-    train_df, test_df = time_based_split(df, config)
-
-    logger.info(f"Train rows: {len(train_df)}")
-    logger.info(f"Test rows: {len(test_df)}")
-
-    date_col = config["data_schema"]["sales"]["date_column"]
-
-    X_train, y_train = prepare_model_data(
-        train_df, config, drop_columns=(date_col,)
-    )
-    X_test, y_test = prepare_model_data(
-        test_df, config, drop_columns=(date_col,)
-    )
-
-    logger.info(f"X_train shape: {X_train.shape}")
-    logger.info(f"X_test shape: {X_test.shape}")
-    logger.info(f"Feature columns: {list(X_train.columns)}")
-    logger.info(f"Unique values per feature:\n{X_train.nunique()}")
-
-    # Guardrail: no feature collapse allowed
-    if X_train.shape[1] == 0:
-        raise RuntimeError(
-            "Feature collapse detected: X_train has 0 columns after preparation."
-        )
-
-    if X_train.shape[0] < 10:
-        logger.warning(
-            "Very small training dataset detected (<10 rows). "
-            "Tree-based models may fail to split."
-        )
+    X_train, y_train = prepare_model_data(train_df, config, drop_columns=(date_col,))
+    X_test, y_test = prepare_model_data(test_df, config, drop_columns=(date_col,))
 
     results = {}
     trained_models = {}
+    tuned_param_registry = {}
 
-    modeling_cfg = config["modeling"]["models"]
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    for model_name, model_config in modeling_cfg.items():
-        if model_config.get("enabled", False):
+    # -------------------------------------------------------------------------
+    # DATA SHIFT DIAGNOSTICS
+    # -------------------------------------------------------------------------
 
-            model_factory = get_model_factory(model_name, config)
+    train_mean = float(y_train.mean())
+    test_mean = float(y_test.mean())
+    train_std = float(y_train.std())
+    test_std = float(y_test.std())
 
-            if model_factory is None:
-                raise ValueError(
-                    f"No factory defined for model '{model_name}'."
-                )
+    mean_shift_pct = ((test_mean - train_mean) / train_mean) * 100 if train_mean != 0 else 0
+    std_shift_pct = ((test_std - train_std) / train_std) * 100 if train_std != 0 else 0
 
-            train_and_evaluate(
-                model_name,
-                model_factory,
-                X_train,
-                y_train,
-                X_test,
-                y_test,
-                results,
-                trained_models,
-            )
+    print("\nTEST SET DIAGNOSTICS")
+    print(f"Train Mean: {train_mean}")
+    print(f"Test Mean : {test_mean}")
+    print(f"Mean Shift %: {mean_shift_pct:.2f}%")
+    print(f"Train Std: {train_std}")
+    print(f"Test Std : {test_std}")
+    print(f"Std Shift %: {std_shift_pct:.2f}%")
 
-    if not results:
-        raise ValueError("No models were enabled for training.")
+    # -------------------------------------------------------------------------
+    # NAIVE BASELINES
+    # -------------------------------------------------------------------------
 
-    metrics_df = deterministic_rank(
-        build_metrics_dataframe(results)
-    )
+    mean_pred = np.full_like(y_test, fill_value=train_mean)
+    last_value = float(y_train.iloc[-1])
+    last_pred = np.full_like(y_test, fill_value=last_value)
 
-    # ========================================================
+    results["baseline_mean"] = evaluate_regression_model(y_test, mean_pred)
+    results["baseline_last_value"] = evaluate_regression_model(y_test, last_pred)
+
+    # -------------------------------------------------------------------------
+    # BASE MODELS
+    # -------------------------------------------------------------------------
+
+    for model_name, model_cfg in config["modeling"]["models"].items():
+
+        if not model_cfg.get("enabled"):
+            continue
+
+        factory = get_model_factory(model_name, config)
+        model = factory()
+
+        model.fit(X_train, y_train)
+        preds = model.predict(X_test)
+
+        metrics = evaluate_regression_model(y_test, preds)
+        labeled = f"{model_name}-base"
+
+        results[labeled] = metrics
+        trained_models[labeled] = model
+
+    # -------------------------------------------------------------------------
     # HYPERPARAMETER TUNING
-    # ========================================================
+    # -------------------------------------------------------------------------
 
-    if hyper_cfg.get("enabled"):
+    if config["hyperparameter_tuning"]["enabled"]:
 
-        top_n = hyper_cfg.get("tune_top_n")
+        ranked_base = rank_models(results, config)
+        top_n = config["hyperparameter_tuning"]["tune_top_n"]
 
-        if not isinstance(top_n, int) or top_n <= 0:
-            raise ValueError("'hyperparameter_tuning.tune_top_n' must be positive integer.")
+        for name, _ in ranked_base[:top_n]:
 
-        top_models = metrics_df.index[:top_n]
-
-        for model_name in top_models:
-
-            tuning_cfg = hyper_cfg.get(model_name)
-            if not tuning_cfg:
+            if "-base" not in name:
                 continue
 
-            fresh_model = get_model_factory(model_name, config)()
+            base_key = name.replace("-base", "")
+            space = config["hyperparameter_tuning"].get(base_key)
+
+            if not space:
+                continue
+
+            base_model = get_model_factory(base_key, config)()
 
             tuned_model = tune_model(
-                fresh_model,
-                tuning_cfg,
+                base_model,
+                space,
                 X_train,
                 y_train,
                 config,
+                base_key,
+                timestamp
             )
+
+            # SAFELY STORE ONLY BEST HYPERPARAMETERS
+            tuned_param_registry[base_key] = tuned_model.get_params(deep=False)
 
             preds = tuned_model.predict(X_test)
+            metrics = evaluate_regression_model(y_test, preds)
 
-            results[f"{model_name}_tuned"] = evaluate_regression_model(
-                y_test, preds
+            labeled = f"{base_key}-tuned"
+            results[labeled] = metrics
+            trained_models[labeled] = tuned_model
+
+    # -------------------------------------------------------------------------
+    # OOF STACKING (WITH FILTER + SAFETY)
+    # -------------------------------------------------------------------------
+
+    if config["ensemble"]["enabled"]:
+
+        ranked_all = rank_models(results, config)
+        top_k = config["ensemble"]["top_k_models"]
+
+        valid_models = [
+            name for name, _ in ranked_all
+            if (
+                ("-base" in name or "-tuned" in name)
+                and not name.startswith("baseline_")
+                and name != "stacking_ensemble"
             )
+        ]
 
-            trained_models[f"{model_name}_tuned"] = tuned_model
+        selected_models = valid_models[:top_k]
 
-        metrics_df = deterministic_rank(
-            build_metrics_dataframe(results)
-        )
+        if not selected_models:
+            logger.warning("No valid models available for stacking. Skipping ensemble.")
+        else:
+            top_factories = {}
 
-    # ========================================================
-    # ENSEMBLE
-    # ========================================================
+            for name in selected_models:
+                base_key = name.split("-")[0]
 
-    if ensemble_cfg.get("enabled"):
+                if base_key in tuned_param_registry:
+                    factory = build_tuned_factory(
+                        base_key,
+                        tuned_param_registry[base_key],
+                        config
+                    )
+                else:
+                    factory = get_model_factory(base_key, config)
 
-        top_k = ensemble_cfg.get("top_k_models")
+                if factory is None:
+                    logger.warning(f"No factory found for model '{name}'. Skipping.")
+                    continue
 
-        if not isinstance(top_k, int) or top_k <= 0:
-            raise ValueError("'ensemble.top_k_models' must be positive integer.")
+                top_factories[name] = factory
 
-        top_models = metrics_df.index[:top_k]
+            if top_factories:
+                stacking_bundle = train_stacking_model(
+                    top_factories,
+                    X_train,
+                    y_train,
+                    config
+                )
 
-        ensemble_base_models = {
-            name: trained_models[name] for name in top_models
-        }
+                preds = predict_stacking_model(stacking_bundle, X_test)
+                metrics = evaluate_regression_model(y_test, preds)
 
-        meta_model = train_stacking_model(
-            ensemble_base_models, X_train, y_train, config
-        )
+                results["stacking_ensemble"] = metrics
+                trained_models["stacking_ensemble"] = stacking_bundle
 
-        ensemble_preds = predict_stacking_model(
-            ensemble_base_models, meta_model, X_test
-        )
+    # -------------------------------------------------------------------------
+    # FINAL RANKING
+    # -------------------------------------------------------------------------
 
-        results["stacking_ensemble"] = evaluate_regression_model(
-            y_test, ensemble_preds
-        )
+    ranked_models = rank_models(results, config)
 
-        trained_models["stacking_ensemble"] = {
-            "base_models": ensemble_base_models,
-            "meta_model": meta_model,
-        }
+    ranked_rows = []
+    for rank, (model_name, metrics) in enumerate(ranked_models, start=1):
+        row = metrics.copy()
+        row["Model"] = model_name
+        row["Rank"] = rank
+        ranked_rows.append(row)
 
-        metrics_df = deterministic_rank(
-            build_metrics_dataframe(results)
-        )
+    ranking_df = pd.DataFrame(ranked_rows)
 
-    # ========================================================
-    # SAVE BEST MODEL
-    # ========================================================
+    print("\n================ MODEL RANKING SUMMARY ================\n")
+    print(tabulate(ranking_df, headers="keys", tablefmt="grid"))
 
-    best_model_name = metrics_df.index[0]
-    best_model = trained_models[best_model_name]
+    best_model_name = ranked_models[0][0]
+    best_metrics = results[best_model_name]
+
+    # -------------------------------------------------------------------------
+    # WARNINGS
+    # -------------------------------------------------------------------------
+
+    if best_metrics["R2"] < 0:
+        logger.warning("Best model has negative R². Performance worse than mean baseline.")
+
+    if best_model_name not in {"baseline_mean", "baseline_last_value"}:
+        if best_metrics["MAE"] > results["baseline_mean"]["MAE"]:
+            logger.warning("Best model performs worse than mean baseline.")
+
+    # -------------------------------------------------------------------------
+    # ARTIFACT GOVERNANCE
+    # -------------------------------------------------------------------------
 
     model_dir = config["paths"]["output"]["model"]
     metrics_dir = config["paths"]["output"]["metrics"]
-    plots_dir = config["paths"]["output"]["plots"]
 
     ensure_directory(model_dir)
     ensure_directory(metrics_dir)
-    ensure_directory(plots_dir)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-
-    latest_path = os.path.join(model_dir, "best_model_latest.pkl")
-
-    if os.path.exists(latest_path) and not overwrite:
-        raise FileExistsError(
-            "best_model_latest.pkl exists and overwrite is disabled."
+    if mode == "prod":
+        joblib.dump(
+            trained_models[best_model_name],
+            os.path.join(model_dir, f"model_{timestamp}.pkl")
         )
+    else:
+        for name, model in trained_models.items():
+            joblib.dump(
+                model,
+                os.path.join(model_dir, f"{name}_{timestamp}.pkl")
+            )
 
-    joblib.dump(best_model, os.path.join(model_dir, f"best_model_{timestamp}.pkl"))
-    joblib.dump(best_model, latest_path)
-
-    metrics_df.to_csv(
-        os.path.join(metrics_dir, f"model_comparison_{timestamp}.csv")
-    )
-
-    if config.get("shap", {}).get("enabled") and hasattr(
-        best_model, "predict"
-    ) and not isinstance(best_model, dict):
-
-        generate_shap_explainability(
-            model=best_model,
-            X_train=X_train,
-            X_test=X_test,
-            model_name=best_model_name,
-            output_dir=plots_dir,
-            config=config,
-            timestamp=timestamp,
-        )
-
-    metadata = {
-        "timestamp": timestamp,
+    monitoring_payload = {
         "best_model": best_model_name,
-        "primary_metric": "MAPE (%)",
-        "metric_value": float(metrics_df.iloc[0]["MAPE (%)"]),
-        "models_evaluated": list(metrics_df.index),
-        "execution_mode": mode,
+        "best_metrics": best_metrics,
+        "all_results": results,
+        "baselines": {
+            "mean": results["baseline_mean"],
+            "last_value": results["baseline_last_value"]
+        },
+        "data_shift": {
+            "train_mean": train_mean,
+            "test_mean": test_mean,
+            "mean_shift_pct": mean_shift_pct,
+            "train_std": train_std,
+            "test_std": test_std,
+            "std_shift_pct": std_shift_pct
+        }
     }
 
-    with open(
-        os.path.join(model_dir, f"experiment_metadata_{timestamp}.json"),
-        "w",
-    ) as f:
-        json.dump(metadata, f, indent=4)
+    with open(os.path.join(metrics_dir, f"metrics_full_{timestamp}.json"), "w") as f:
+        json.dump(monitoring_payload, f, indent=4)
 
-    logger.info("Training pipeline completed successfully.")
+    ranking_df.to_csv(
+        os.path.join(metrics_dir, f"metrics_full_{timestamp}.csv"),
+        index=False
+    )
+
+    # -------------------------------------------------------------------------
+    # SHAP GOVERNANCE
+    # -------------------------------------------------------------------------
+
+    best_model = trained_models.get(best_model_name)
+
+    if best_model and not isinstance(best_model, dict):
+        generate_shap_explainability(
+            best_model,
+            X_train,
+            X_test,
+            best_model_name,
+            config["paths"]["output"]["plots"],
+            config,
+            timestamp
+        )
+
+    logger.info("Training completed successfully.")
+    logger.info(f"Best Model: {best_model_name}")
+    logger.info(f"Timestamp: {timestamp}")
 
 
 if __name__ == "__main__":
